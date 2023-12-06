@@ -3,8 +3,8 @@ const XLSX = require("xlsx");
 function readExcelData() {
 	const workbook = XLSX.readFile("D:/RPA/RPA-EOD-CERIA/Report.xlsx");
 	const sheet = workbook.Sheets[workbook.SheetNames[0]];
-	const rangeReport1 = { s: { r: 0, c: 9 }, e: { r: 1, c: 9 } };
-	const rangeReport2 = { s: { r: 0, c: 8 }, e: { r: 64, c: 8 } };
+	const rangeReport1 = { s: { r: 0, c: 15 }, e: { r: 1, c: 15 } };
+	const rangeReport2 = { s: { r: 0, c: 13 }, e: { r: 66, c: 13 } };
 
 	const rawDataReport1 = XLSX.utils.sheet_to_json(sheet, {
 		range: rangeReport1,
