@@ -7,4 +7,8 @@ module.exports = [
 		id: "120363200862456218@g.us",
 		name: "Tes Node.js 2",
 	},
+	{
+		id: "120363043996208586@g.us",
+		name: "performance team",
+	},
 ];

@@ -3,7 +3,7 @@ const { Client, LocalAuth } = require("whatsapp-web.js");
 const fs = require("fs");
 const express = require("express");
 const app = express();
-const port = 3000;
+const port = 3001;
 
 function logWithDate(message) {
 	let date = new Date().toISOString();
@@ -24,6 +24,7 @@ client.on("qr", (qr) => {
 client.on("message", (message) => {
 	if (message.body === "!ping") {
 		message.reply("pong");
+		logWithDate(` ${message.from}: pinged!`);
 	} else if (message.body === "!status") {
 		fs.readFile("log/status.log", "utf8", (err, data) => {
 			if (err) {
@@ -31,8 +32,9 @@ client.on("message", (message) => {
 				return;
 			}
 			let lines = data.trim().split("\n");
-			let lastLine = lines.slice(-1)[0];
-			message.reply(lastLine);
+			let lastTwoLines = lines.slice(-5).join("\n");
+			message.reply(lastTwoLines);
+			logWithDate(` ${message.from}: status!`);
 		});
 	}
 });

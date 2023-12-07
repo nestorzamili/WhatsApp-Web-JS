@@ -14,7 +14,11 @@ async function sendReports(client) {
 		"9. Information about autodebet job status (failed, success, and partial success)";
 
 	const reportData = readExcelData();
-	for (const group of groups) {
+	const groupName = ["Tes Node.js 1", "Tes Node.js 2"];
+	const filteredGroup = groups.filter((group) =>
+		groupName.includes(group.name)
+	);
+	for (const group of filteredGroup) {
 		await sendReportToWhatsApp(client, group.id, reportData.report1);
 		await sendReportToWhatsApp(client, group.id, reportData.report2);
 		await sendImageWithCaption(client, group.id, imagePath, caption);
