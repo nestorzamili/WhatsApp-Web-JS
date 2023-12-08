@@ -9,7 +9,7 @@ function logWithDate(message) {
 
 async function reportAfterEOD(client, caption, imagePath) {
 	const reportData = readExcelData();
-	const groupName = ["Tes Node.js 1", "Tes Node.js 2"];
+	const groupName = ["DDB Operation", "DDB x CDD Ceria Ops"];
 	const filteredGroup = groups.filter((group) =>
 		groupName.includes(group.name)
 	);
