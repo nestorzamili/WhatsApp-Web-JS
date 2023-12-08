@@ -1,5 +1,4 @@
 const { MessageMedia } = require("whatsapp-web.js");
-const path = require("path");
 const readExcelData = require("./readExcel");
 const groups = require("./groups");
 
@@ -8,11 +7,7 @@ function logWithDate(message) {
 	console.log(`[${date}] ${message}`);
 }
 
-async function sendReports(client) {
-	const imagePath = "D:/EOD/RPA/RPA-EOD-CERIA/Images/img1.png";
-	const caption =
-		"9. Information about autodebet job status (failed, success, and partial success)";
-
+async function reportAfterEOD(client, caption, imagePath) {
 	const reportData = readExcelData();
 	const groupName = ["Tes Node.js 1", "Tes Node.js 2"];
 	const filteredGroup = groups.filter((group) =>
@@ -21,9 +16,9 @@ async function sendReports(client) {
 	for (const group of filteredGroup) {
 		await sendReportToWhatsApp(client, group.id, reportData.report1);
 		await sendReportToWhatsApp(client, group.id, reportData.report2);
-		await sendImageWithCaption(client, group.id, imagePath, caption);
+		await sendImageWithCaption(client, group.id, caption, imagePath);
 
-		logWithDate(`Data berhasil dikirim ke grup ${group.name}`);
+		logWithDate(`Report after EOD berhasil dikirim ke ${group.name}`);
 	}
 }
 
@@ -32,20 +27,17 @@ async function sendReportToWhatsApp(client, groupId, reportData) {
 		const message = `${reportData}`;
 		await client.sendMessage(groupId, message);
 	} catch (error) {
-		console.error("Gagal mengirim data ke WhatsApp:", error);
+		console.error("Gagal mengirim report after EOD ke WhatsApp:", error);
 	}
 }
 
-async function sendImageWithCaption(client, groupId, imagePath, caption) {
+async function sendImageWithCaption(client, groupId, caption, imagePath) {
 	try {
-		const media = MessageMedia.fromFilePath(path.resolve(imagePath));
+		const media = MessageMedia.fromFilePath(imagePath);
 		await client.sendMessage(groupId, media, { caption: caption });
 	} catch (error) {
-		console.error(
-			"Gagal mengirim gambar dengan caption ke WhatsApp:",
-			error
-		);
+		console.error("Gagal mengirim report No.9 ke WhatsApp:", error);
 	}
 }
 
-module.exports = sendReports;
+module.exports = reportAfterEOD;

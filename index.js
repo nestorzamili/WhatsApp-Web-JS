@@ -14,6 +14,7 @@ const client = new Client({
 	authStrategy: new LocalAuth(),
 });
 
+app.use(express.json());
 const routes = require("./routes");
 routes(app, client);
 

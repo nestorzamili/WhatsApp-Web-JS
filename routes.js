@@ -1,11 +1,13 @@
-const sendReport = require("./script/sendReport");
+const reportAfterEOD = require("./script/reportAfterEOD");
 const getGroupID = require("./script/getGroupID");
-const testSendMessage = require("./script/testSendMessage");
+const reportNewUser = require("./script/reportNewUser");
 
 module.exports = function (app, client) {
-	app.get("/send-report", async (req, res) => {
-		await sendReport(client);
-		res.send("Data berhasil dikirim ke grup WhatsApp!");
+	app.post("/report-after-eod", async (req, res) => {
+		const caption = req.body.caption;
+		const imagePath = req.body.imagePath;
+		await reportAfterEOD(client, caption, imagePath);
+		res.send("Pesan berhasil dikirim ke grup WhatsApp!");
 	});
 
 	app.get("/get-group-id", async (req, res) => {
@@ -13,8 +15,10 @@ module.exports = function (app, client) {
 		res.json(groupData);
 	});
 
-	app.get("/test-send-message", async (req, res) => {
-		await testSendMessage(client);
-		res.send("Data berhasil dikirim ke grup WhatsApp!");
+	app.post("/report-new-user", async (req, res) => {
+		const caption = req.body.caption;
+		const imagePath = req.body.imagePath;
+		await reportNewUser(client, caption, imagePath);
+		res.send("Pesan berhasil dikirim ke grup WhatsApp!");
 	});
 };
