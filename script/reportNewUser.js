@@ -10,7 +10,7 @@ function logWithDate(message) {
 async function reportNewUser(client, imagePath) {
 	// Find the group ID based on the group name
 	const reportData = readExcelData();
-	const groupName = ["Tes Node.js 1"];
+	const groupName = ["performance team"];
 	const filteredGroup = groups.filter((group) =>
 		groupName.includes(group.name)
 	);
