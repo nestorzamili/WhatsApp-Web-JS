@@ -7,12 +7,14 @@ function logWithDate(message) {
 	console.log(`[${date}] ${message}`);
 }
 
-async function reportAfterEOD(client, caption, imagePath) {
+async function reportAfterEOD(client) {
 	const reportData = readExcelData();
 	const groupName = ["DDB Operation", "DDB x CDD Ceria Ops"];
 	const filteredGroup = groups.filter((group) =>
 		groupName.includes(group.name)
 	);
+	const caption = "9. Information about autodebet job status (failed, success, and partial success";
+	const imagePath = "D:/RPA/RPA-EOD-CERIA/Images/img1.png";
 	for (const group of filteredGroup) {
 		await sendReportToWhatsApp(client, group.id, reportData.report1);
 		await sendReportToWhatsApp(client, group.id, reportData.report2);

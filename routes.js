@@ -4,9 +4,7 @@ const reportNewUser = require("./script/reportNewUser");
 
 module.exports = function (app, client) {
 	app.post("/report-after-eod", async (req, res) => {
-		const caption = req.body.caption;
-		const imagePath = req.body.imagePath;
-		await reportAfterEOD(client, caption, imagePath);
+		await reportAfterEOD(client);
 		res.send("Pesan berhasil dikirim ke grup WhatsApp!");
 	});
 
