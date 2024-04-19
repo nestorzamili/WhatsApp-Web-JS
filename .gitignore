@@ -1,4 +1,5 @@
-.wwebjs_auth/
-.wwebjs_cache/
 node_modules/
-log/
+.wwebjs_auth/
+logs/status.log
+.env
+whatsapp-bot-data/
