@@ -27,17 +27,17 @@ module.exports = function (app, client) {
     });
 
 	// Route untuk mengirim pesan berupa file ke id yang diberikan
-    app.post("/send-file", verifyKey, upload.single('attachment'), async (req, res) => {
+    app.post("/send-file", verifyKey, upload.array('attachment'), async (req, res) => {
         const caption = req.body.caption;
         const ids = req.header("ids") ? req.header("ids").split(',') : [];
-        const attachmentFile = req.file;
+        const attachmentFiles = req.files;
 
-        if (!attachmentFile || !ids || ids.length === 0 ) {
-			return res.status(400).send('Bad Request: Attachment, and IDs are required!');
-		}
+        if (!attachmentFiles || attachmentFiles.length === 0 || !ids || ids.length === 0 ) {
+            return res.status(400).send('Bad Request: Attachments, and IDs are required!');
+        }
 
         try {
-            await jsonContent(client, caption, attachmentFile, ids);
+            await jsonContent(client, caption, attachmentFiles, ids);
             const names = await getChatName(client, ids);
             res.send(`Pesan berhasil dikirim ke ${names.join(', ')}!`);
         } catch (error) {
