@@ -1,11 +1,9 @@
 require("dotenv").config();
 const qrcode = require("qrcode-terminal");
-const { Client, RemoteAuth } = require("whatsapp-web.js");
-const { AwsS3Store } = require("wwebjs-aws-s3");
-const { S3Client, PutObjectCommand, HeadObjectCommand, GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
-const { logWithDate } = require("./utils/logger");
+const { Client, LocalAuth } = require("whatsapp-web.js");
 const fs = require("fs");
 const express = require("express");
+const logWithDate = require("./utils/logger");
 const routes = require("./routes");
 
 const app = express();
@@ -13,46 +11,37 @@ const app = express();
 app.use(express.json());
 app.use(express.text());
 
-const s3 = new S3Client({
-    region: process.env.AWS_REGION,
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-    }
-});
-
-const putObjectCommand = PutObjectCommand;
-const headObjectCommand = HeadObjectCommand;
-const getObjectCommand = GetObjectCommand;
-const deleteObjectCommand = DeleteObjectCommand;
-
-const store = new AwsS3Store({
-    bucketName: process.env.AWS_BUCKET_NAME,
-    remoteDataPath: process.env.AWS_REMOTE_DATA_PATH,
-    s3Client: s3,
-    putObjectCommand,
-    headObjectCommand,
-    getObjectCommand,
-    deleteObjectCommand
-});
-
 const client = new Client({
-    authStrategy: new RemoteAuth({
-        clientId: "whatsapp-bot",
-        dataPath: "whatsapp-bot-data",
-        store: store,
-        backupSyncIntervalMs: 600000
-    }),
+	authStrategy: new LocalAuth(),
+	dataPath: "session",
 	webVersionCache: {
-		type: 'remote',
-		remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2413.51-beta.html',
-    }
+		type: "remote",
+		remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1012750699-alpha.html",
+	},
 });
 
 routes(app, client);
 
+client.initialize();
+
 client.on("qr", (qr) => {
-    qrcode.generate(qr, { small: true });
+	qrcode.generate(qr, { small: true });
+});
+
+client.on('authenticated', () => {
+    logWithDate(`Authenticated!`);
+});
+
+client.on('loading_screen', (percent, message) => {
+    logWithDate(`Loading: ${percent}% - ${message}`);
+});
+
+client.on("ready", () => {
+    logWithDate("WhatsApp API siap digunakan!");
+
+    app.listen(process.env.PORT, () => {
+        logWithDate(`Server berjalan di port ${process.env.PORT}`);
+    });
 });
 
 client.on("message", (message) => {
@@ -71,12 +60,3 @@ client.on("message", (message) => {
         });
     }
 });
-
-client.on("ready", () => {
-    logWithDate("WhatsApp API siap digunakan!");
-
-    app.listen(process.env.PORT)
-    logWithDate(`Server berjalan di port ${process.env.PORT}`);
-});
-
-client.initialize();
