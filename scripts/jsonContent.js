@@ -23,8 +23,8 @@ async function jsonContent(client, caption, attachmentFiles, ids) {
             );
 
             try {
-                await client.sendMessage(id, media, { caption: caption });
-                logWithDate(`Report berhasil dikirim ke ${id}`);
+                let sentMessage = await client.sendMessage(id, media, { caption: caption });
+                logWithDate(`Report berhasil dikirim ke ${id} dengan ID pesan: ${sentMessage.id._serialized}`);
             } catch (error) {
                 logWithDate(`Error sending message: ${error}`);
                 throw error;
