@@ -3,8 +3,8 @@ const { logWithDate } = require("../utils/logger");
 async function txtContent(client, message, ids) {
     for (const id of ids) {
         try {
-            await client.sendMessage(id, message);
-            logWithDate(`Report berhasil dikirim ke ${id}`);
+            let sentMessage = await client.sendMessage(id, message);
+            logWithDate(`Report berhasil dikirim ke ${id} dengan ID pesan: ${sentMessage.id._serialized}`);
         } catch (error) {
             logWithDate(`Error sending message: ${error}`);
         }
