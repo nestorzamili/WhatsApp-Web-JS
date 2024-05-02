@@ -6,9 +6,9 @@ const {
   HarmBlockThreshold,
 } = require("@google/generative-ai");
 
-async function runChat() {
+async function getAIResponse(question) {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: process.env.MODEL_NAME });
+  const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL_NAME });
 
   const generationConfig = {
     temperature: 1,
@@ -43,9 +43,9 @@ async function runChat() {
     ],
   });
 
-  const result = await chat.sendMessage("YOUR_USER_INPUT");
+  const result = await chat.sendMessage(question);
   const response = result.response;
-  console.log(response.text());
+  return response.text();
 }
 
-runChat();
+module.exports = getAIResponse;

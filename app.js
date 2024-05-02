@@ -4,9 +4,8 @@ const { Client, LocalAuth } = require("whatsapp-web.js");
 const { logWithDate } = require("./utils/logger");
 const fs = require("fs");
 const express = require("express");
-const logWithDate = require("./utils/logger");
 const routes = require("./routes");
-const { log } = require("util");
+const getAIResponse = require("./utils/geminiClient");
 
 const app = express();
 
@@ -66,5 +65,15 @@ client.on("message", async (message) => {
         } catch (error) {
             logWithDate(`Error getting message: ${error}`);
         }
-    } 
+    } else if (message.body.startsWith("!AI ")) {
+        let question = message.body.slice(4);
+        try {
+            const response = await getAIResponse(question);
+            message.reply(response);
+            logWithDate(` ${message.from}: ${question}`);
+        }
+        catch (error) {
+            logWithDate(`Error getting AI response: ${error}`);
+        }
+    }
 });
