@@ -8,7 +8,8 @@ This is a WhatsApp bot built with Express.js that connects through the WhatsApp 
 - Send file messages with or without captions to multiple individuals or groups simultaneously via API.
 - Check WhatsApp Group IDs.
 - Test response with `!ping`.
-- Check logs with `!status`.
+- Check logs with `!logs`.
+- Delete messages by message id `!deleteMessage,yourmessageid` (You can check messageId in the logs😊)
 
 ## Usage
 
@@ -28,7 +29,7 @@ echo "samunu_$(openssl rand -hex 32)"
 
 #### Get Group ID
 
-```http
+```bash
   GET http://localhost/get-group-id
 ```
 
@@ -40,7 +41,7 @@ echo "samunu_$(openssl rand -hex 32)"
 
 #### Send Plain Text
 
-```http
+```bash
   POST http://localhost/send-plaintext
 ```
 
@@ -53,7 +54,7 @@ echo "samunu_$(openssl rand -hex 32)"
 
 #### Send File
 
-```http
+```bash
   POST http://localhost/send-file
 ```
 
