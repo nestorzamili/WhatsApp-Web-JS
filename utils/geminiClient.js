@@ -45,7 +45,10 @@ async function getAIResponse(question) {
 
   const result = await chat.sendMessage(question);
   const response = result.response;
-  return response.text().replace(/#/g, '').replace(/\*\*(?=\*)/g, '');
+  return response.text()
+    .replace(/#/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '*$1*')
+    .replace(/^\* /gm, '- ');
 }
 
 module.exports = getAIResponse;
