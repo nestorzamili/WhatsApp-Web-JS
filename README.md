@@ -31,7 +31,7 @@ echo "samunu_$(openssl rand -hex 32)"
 #### Get Group ID
 
 ```bash
-  GET http://localhost/get-group-id
+  GET http://localhost:3000/get-group-id
 ```
 
 | Parameter | Type     | Description                |
@@ -43,7 +43,7 @@ echo "samunu_$(openssl rand -hex 32)"
 #### Send Plain Text
 
 ```bash
-  POST http://localhost/send-plaintext
+  POST http://localhost:3000/send-plaintext
 ```
 
 | Parameter | Type     | Description                |
@@ -56,7 +56,7 @@ echo "samunu_$(openssl rand -hex 32)"
 #### Send File
 
 ```bash
-  POST http://localhost/send-file
+  POST http://localhost:3000/send-file
 ```
 
 | Parameter | Type     | Description                |
