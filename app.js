@@ -50,9 +50,9 @@ client.on("message", async (message) => {
                 return;
             }
             let lines = data.trim().split("\n");
-            let recentLines = lines.slice(-30).join("\n");
+            let recentLines = lines.slice(-10).join("\n");
             message.reply(recentLines);
-            logWithDate(` ${message.from}: status!`);
+            logWithDate(` ${message.from}: !logs`);
         });
     } else if (message.body.startsWith("!deleteMessage,")) {
         let messageID = message.body.split(",")[1];
@@ -60,6 +60,7 @@ client.on("message", async (message) => {
             let msg = await client.getMessageById(messageID);
             if (msg.fromMe) {
                 msg.delete(true);
+                message.reply(`Pesan dengan ID ${messageID} telah dihapus!`);
                 logWithDate(`Pesan dengan ID ${messageID} telah dihapus!`);
             }
         } catch (error) {

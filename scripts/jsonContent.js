@@ -23,11 +23,12 @@ async function jsonContent(client, caption, attachmentFiles, ids) {
             );
 
             try {
+                let chat = await client.getChatById(id);
+                let groupName = chat.name;
                 let sentMessage = await client.sendMessage(id, media, { caption: caption });
-                logWithDate(`Report berhasil dikirim ke ${id} dengan ID pesan: ${sentMessage.id._serialized}`);
+                logWithDate(`Report berhasil dikirim ke ${groupName} dengan ID pesan: ${sentMessage.id._serialized}`);
             } catch (error) {
                 logWithDate(`Error sending message: ${error}`);
-                throw error;
             }
         }
     });
