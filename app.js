@@ -50,7 +50,7 @@ client.on("message", async (message) => {
                 return;
             }
             let lines = data.trim().split("\n");
-            let recentLines = lines.slice(-5).join("\n");
+            let recentLines = lines.slice(-30).join("\n");
             message.reply(recentLines);
             logWithDate(` ${message.from}: status!`);
         });
