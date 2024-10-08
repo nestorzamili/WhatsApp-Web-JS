@@ -45,13 +45,16 @@ client.on("qr", (qr) => {
 
 client.on("loading_screen", (percent, message) => {
   logWithDate(`Loading: ${percent}% - ${message}`);
+  console.log(`Loading: ${percent}% - ${message}`);
 });
 
 client.on("ready", () => {
   logWithDate("WhatsApp API siap digunakan!");
+  console.log("WhatsApp API siap digunakan!");
 
   app.listen(PORT, () => {
     logWithDate(`Server berjalan di port ${PORT}`);
+    console.log(`Server berjalan di port ${PORT}`);
   });
 });
 
@@ -59,6 +62,7 @@ client.on("message", async (message) => {
   if (message.body === "!ping") {
     message.reply("pong");
     logWithDate(` ${message.from}: pinged!`);
+    console.log(`${message.from}: pinged!`);
   } else if (message.body === "!logs") {
     fs.readFile("logs/status.log", "utf8", (err, data) => {
       if (err) {
@@ -68,6 +72,7 @@ client.on("message", async (message) => {
       let recentLines = lines.slice(-10).join("\n");
       message.reply(recentLines);
       logWithDate(` ${message.from}: !logs`);
+      console.log(`${message.from}: !logs`);
     });
   } else if (message.body.startsWith("!deleteMessage,")) {
     let messageID = message.body.split(",")[1];
@@ -77,9 +82,11 @@ client.on("message", async (message) => {
         msg.delete(true);
         message.reply(`Pesan dengan ID ${messageID} telah dihapus!`);
         logWithDate(`Pesan dengan ID ${messageID} telah dihapus!`);
+        console.log(`Pesan dengan ID ${messageID} telah dihapus!`);
       }
     } catch (error) {
       logWithDate(`Error getting message: ${error}`);
+      console.log(`Error getting message: ${error}`);
     }
   } else if (message.body.startsWith("!AI ")) {
     let question = message.body.slice(4);
@@ -87,8 +94,10 @@ client.on("message", async (message) => {
       const response = await getAIResponse(question);
       message.reply(response);
       logWithDate(` ${message.from}: ${question}`);
+      console.log(`${message.from}: ${question}`);
     } catch (error) {
       logWithDate(`Error getting AI response: ${error}`);
+      console.log(`Error getting AI response: ${error}`);
     }
   }
 });
