@@ -1,17 +1,18 @@
 {
-	"name": "whatsapp-bot",
-	"version": "1.0.0",
-	"description": "WhatsApp Bot",
-	"main": "app.js",
-	"scripts": {
-		"start": "node app.js"
-	},
-	"dependencies": {
-		"@google/generative-ai": "^0.17.1",
-		"dotenv": "^16.4.5",
-		"express": "^4.21.0",
-		"multer": "^1.4.5-lts.1",
-		"qrcode-terminal": "^0.12.0",
-		"whatsapp-web.js": "^1.24.0"
-	}
+  "name": "whatsapp-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp Bot",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "heroku-postbuild": "npm run build && mkdir  ./.cache && mv /app/.cache/puppeteer ./.cache"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.17.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "multer": "^1.4.5-lts.1",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.24.0"
+  }
 }
