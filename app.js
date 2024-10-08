@@ -8,6 +8,7 @@ const routes = require("./routes");
 const getAIResponse = require("./utils/geminiClient");
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.text());
@@ -49,8 +50,8 @@ client.on("loading_screen", (percent, message) => {
 client.on("ready", () => {
   logWithDate("WhatsApp API siap digunakan!");
 
-  app.listen(3000, () => {
-    logWithDate("Server berjalan di port 3000");
+  app.listen(PORT, () => {
+    logWithDate(`Server berjalan di port ${PORT}`);
   });
 });
 
