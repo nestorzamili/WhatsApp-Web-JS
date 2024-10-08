@@ -49,8 +49,9 @@ client.on("loading_screen", (percent, message) => {
 client.on("ready", () => {
   logWithDate("WhatsApp API siap digunakan!");
 
-  app.listen(process.env.PORT);
-  logWithDate(`Server berjalan di port ${process.env.PORT}`);
+  app.listen(3000, () => {
+    logWithDate("Server berjalan di port 3000");
+  });
 });
 
 client.on("message", async (message) => {
