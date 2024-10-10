@@ -2,9 +2,9 @@
   "name": "whatsapp-bot",
   "version": "1.0.0",
   "description": "WhatsApp Bot",
-  "main": "app.js",
+  "main": "remoteAuth.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node remoteAuth.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.668.0",

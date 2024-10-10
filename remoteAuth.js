@@ -1,6 +1,14 @@
 require("dotenv").config();
 const qrcode = require("qrcode-terminal");
-const { Client, LocalAuth } = require("whatsapp-web.js");
+const { Client, RemoteAuth } = require("whatsapp-web.js");
+const { AwsS3Store } = require("wwebjs-aws-s3");
+const {
+  S3Client,
+  PutObjectCommand,
+  HeadObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} = require("@aws-sdk/client-s3");
 const { logWithDate } = require("./utils/logger");
 const fs = require("fs");
 const express = require("express");
@@ -12,6 +20,29 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.text());
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+const putObjectCommand = PutObjectCommand;
+const headObjectCommand = HeadObjectCommand;
+const getObjectCommand = GetObjectCommand;
+const deleteObjectCommand = DeleteObjectCommand;
+
+const store = new AwsS3Store({
+  bucketName: process.env.AWS_BUCKET_NAME,
+  remoteDataPath: process.env.AWS_REMOTE_DATA_PATH,
+  s3Client: s3,
+  putObjectCommand,
+  headObjectCommand,
+  getObjectCommand,
+  deleteObjectCommand,
+});
 
 const client = new Client({
   puppeteer: {
@@ -27,16 +58,20 @@ const client = new Client({
       "--disable-gpu",
     ],
   },
-  authStrategy: new LocalAuth(),
-  dataPath: "session",
-  // webVersionCache: {
-  // 	type: "remote",
-  // 	remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
-  // },
+  authStrategy: new RemoteAuth({
+    clientId: "whatsapp-bot",
+    dataPath: "whatsapp-bot-data",
+    store: store,
+    backupSyncIntervalMs: 600000,
+  }),
+  webVersionCache: {
+    type: "remote",
+    remotePath:
+      "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2413.51-beta.html",
+  },
 });
 
 routes(app, client);
-
 client.initialize();
 
 client.on("qr", (qr) => {
