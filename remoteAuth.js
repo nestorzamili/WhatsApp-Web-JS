@@ -64,11 +64,6 @@ const client = new Client({
     store: store,
     backupSyncIntervalMs: 600000,
   }),
-  //   webVersionCache: {
-  //     type: "remote",
-  //     remotePath:
-  //       "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2413.51-beta.html",
-  //   },
 });
 
 routes(app, client);
@@ -87,9 +82,18 @@ client.on("ready", () => {
   logWithDate("WhatsApp API siap digunakan!");
   console.log("WhatsApp API siap digunakan!");
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     logWithDate(`Server berjalan di port ${PORT}`);
     console.log(`Server berjalan di port ${PORT}`);
+  });
+
+  server.on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`Port ${PORT} sudah digunakan, mencoba port lain...`);
+      server.listen(0);
+    } else {
+      throw err;
+    }
   });
 });
 
