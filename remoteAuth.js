@@ -2,7 +2,13 @@ require("dotenv").config();
 const qrcode = require("qrcode-terminal");
 const { Client, RemoteAuth } = require("whatsapp-web.js");
 const { AwsS3Store } = require("wwebjs-aws-s3");
-const { S3Client, PutObjectCommand, HeadObjectCommand, GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const {
+  S3Client,
+  PutObjectCommand,
+  HeadObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} = require("@aws-sdk/client-s3");
 const { logWithDate } = require("./utils/logger");
 const fs = require("fs");
 const express = require("express");
@@ -10,14 +16,25 @@ const routes = require("./routes");
 const getAIResponse = require("./utils/geminiClient");
 
 const app = express();
-const { PORT = 3000, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET_NAME, AWS_REMOTE_DATA_PATH } = process.env;
+const {
+  PORT = 3000,
+  AWS_REGION,
+  AWS_ACCESS_KEY_ID,
+  AWS_SECRET_ACCESS_KEY,
+  AWS_BUCKET_NAME,
+  AWS_REMOTE_DATA_PATH,
+} = process.env;
 
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 app.use(express.text());
+app.use(express.urlencoded({ extended: true }));
 
 const s3 = new S3Client({
   region: AWS_REGION,
-  credentials: { accessKeyId: AWS_ACCESS_KEY_ID, secretAccessKey: AWS_SECRET_ACCESS_KEY },
+  credentials: {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+  },
 });
 
 const store = new AwsS3Store({
@@ -31,7 +48,10 @@ const store = new AwsS3Store({
 });
 
 const client = new Client({
-  puppeteer: { headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"] },
+  puppeteer: {
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"],
+  },
   authStrategy: new RemoteAuth({
     clientId: "whatsapp-bot",
     dataPath: "whatsapp-bot-data",
@@ -44,7 +64,9 @@ routes(app, client);
 client.initialize();
 
 client.on("qr", (qr) => qrcode.generate(qr, { small: true }));
-client.on("loading_screen", (percent, message) => log(`Loading: ${percent}% - ${message}`));
+client.on("loading_screen", (percent, message) =>
+  log(`Loading: ${percent}% - ${message}`)
+);
 client.on("ready", () => startServer());
 
 client.on("message", async (message) => {
@@ -52,7 +74,8 @@ client.on("message", async (message) => {
 
   if (body === "!ping") return handlePing(message, from);
   if (body === "!logs") return handleLogs(message, from);
-  if (body.startsWith("!deleteMessage,")) return handleDeleteMessage(message, body);
+  if (body.startsWith("!deleteMessage,"))
+    return handleDeleteMessage(message, body);
   if (body.startsWith("!AI ")) return handleAIResponse(message, body, from);
 });
 
