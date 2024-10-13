@@ -1,3 +1,4 @@
+
 # WhatsApp Bot
 
 This is a WhatsApp bot built with Express.js that connects through the WhatsApp Web browser app and uses the [WhatsApp Web](https://wwebjs.dev/) client library for the WhatsApp Web API.
@@ -6,6 +7,7 @@ This is a WhatsApp bot built with Express.js that connects through the WhatsApp 
 
 - Send text messages to multiple individuals or groups simultaneously via API.
 - Send file messages with or without captions to multiple individuals or groups simultaneously via API.
+- *Send images as base64*
 - Check WhatsApp Group IDs.
 - Test response with `!ping`.
 - Check logs with `!logs`.
@@ -66,6 +68,43 @@ echo "samunu_$(openssl rand -hex 32)"
 | `Content-Type` | `form-data` | or `application/json` |
 | `attachment` | `file` | **Required**. *Example:*`D:/test.jpg` |
 | `caption` | `string` | *Optional* |
+
+#### Send Base64 Image
+
+```bash
+  POST http://localhost:3000/send-base64-image
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `x-api-key` | `string` | **Required**. Your API key |
+| `ids` | `string` | **Required**. *Single or Multiples ID, separate with comma without space. Example: 120363185xxxxxx@g.us,120363199xxxxxx@g.us*|
+| `Content-Type` | `application/json` |
+| `body` | `json` | `see example JSON body`
+
+Example JSON body:
+```
+{
+  "caption": "caption",
+  "images": [
+    {
+      "mimetype": "image/jpeg",
+      "data": "base64encodedstring...",
+      "filename": "image1.jpg"
+    },
+    {
+      "mimetype": "image/png",
+      "data": "base64encodedstring...",
+      "filename": "image2.png"
+    }
+  ]
+}
+```
+
+## Note
+
+Use the `app.js` file if you want to use localAuth, use the `remoteAuth.js` file if you want to use AWS S3 for auth. **Edit your `package.json` file**
+
 
 ## Doc
 
