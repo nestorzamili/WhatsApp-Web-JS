@@ -1,50 +1,35 @@
 require("dotenv").config();
 const qrcode = require("qrcode-terminal");
 const { Client, RemoteAuth } = require("whatsapp-web.js");
-const { AwsS3Store } = require("wwebjs-aws-s3");
-const {
-  S3Client,
-  PutObjectCommand,
-  HeadObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
-} = require("@aws-sdk/client-s3");
 const { logWithDate } = require("./utils/logger");
 const fs = require("fs");
 const express = require("express");
 const routes = require("./routes");
 const getAIResponse = require("./utils/geminiClient");
+const { AwsS3Store, S3Client } = require("./utils/awsS3Store");
 
 const app = express();
-const {
-  PORT = 3000,
-  AWS_REGION,
-  AWS_ACCESS_KEY_ID,
-  AWS_SECRET_ACCESS_KEY,
-  AWS_BUCKET_NAME,
-  AWS_REMOTE_DATA_PATH,
-} = process.env;
+const { PORT = 3000 } = process.env;
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.text());
 app.use(express.urlencoded({ extended: true }));
 
-const s3 = new S3Client({
-  region: AWS_REGION,
+const S3 = new S3Client({
+  region: process.env.AWS_REGION,
   credentials: {
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+  httpOptions: {
+    timeout: 60000,
   },
 });
 
 const store = new AwsS3Store({
-  bucketName: AWS_BUCKET_NAME,
-  remoteDataPath: AWS_REMOTE_DATA_PATH,
-  s3Client: s3,
-  putObjectCommand: PutObjectCommand,
-  headObjectCommand: HeadObjectCommand,
-  getObjectCommand: GetObjectCommand,
-  deleteObjectCommand: DeleteObjectCommand,
+  bucketName: process.env.AWS_BUCKET_NAME,
+  remoteDataPath: process.env.AWS_REMOTE_DATA_PATH,
+  s3Client: S3,
 });
 
 const client = new Client({
@@ -54,8 +39,8 @@ const client = new Client({
   },
   authStrategy: new RemoteAuth({
     clientId: "whatsapp-bot",
-    dataPath: "whatsapp-bot-data",
-    store,
+    dataPath: "./.wwebjs_auth",
+    store: store,
     backupSyncIntervalMs: 600000,
   }),
 });
@@ -67,6 +52,9 @@ client.on("qr", (qr) => qrcode.generate(qr, { small: true }));
 client.on("loading_screen", (percent, message) =>
   log(`Loading: ${percent}% - ${message}`)
 );
+client.on("auth_failure", () => log("Authentication failure!"));
+client.on("disconnected", () => log("Client disconnected!"));
+client.on("authenticated", () => log("Client authenticated!"));
 client.on("ready", () => startServer());
 
 client.on("message", async (message) => {
