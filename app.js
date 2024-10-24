@@ -8,96 +8,130 @@ const routes = require("./routes");
 const getAIResponse = require("./utils/geminiClient");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const { PORT = 3113 } = process.env;
 
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
 app.use(express.text());
+app.use(express.urlencoded({ extended: true }));
 
 const client = new Client({
   puppeteer: {
     headless: true,
     args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
       "--disable-accelerated-2d-canvas",
-      "--no-first-run",
-      "--no-zygote",
-      "--single-process",
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-breakpad",
+      "--disable-cache",
+      "--disable-component-extensions-with-background-pages",
+      "--disable-crash-reporter",
+      "--disable-dev-shm-usage",
+      "--disable-extensions",
       "--disable-gpu",
+      "--disable-hang-monitor",
+      "--disable-ipc-flooding-protection",
+      "--disable-mojo-local-storage",
+      "--disable-notifications",
+      "--disable-popup-blocking",
+      "--disable-print-preview",
+      "--disable-prompt-on-repost",
+      "--disable-renderer-backgrounding",
+      "--disable-software-rasterizer",
+      "--ignore-certificate-errors",
+      "--log-level=3",
+      "--no-default-browser-check",
+      "--no-first-run",
+      "--no-sandbox",
+      "--no-zygote",
+      "--renderer-process-limit=100",
+      "--enable-gpu-rasterization",
+      "--enable-zero-copy",
     ],
   },
   authStrategy: new LocalAuth(),
   dataPath: "session",
-  // webVersionCache: {
-  // 	type: "remote",
-  // 	remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html",
-  // },
 });
 
 routes(app, client);
-
 client.initialize();
 
-client.on("qr", (qr) => {
-  qrcode.generate(qr, { small: true });
-});
-
-client.on("loading_screen", (percent, message) => {
-  logWithDate(`Loading: ${percent}% - ${message}`);
-  console.log(`Loading: ${percent}% - ${message}`);
-});
-
-client.on("ready", () => {
-  logWithDate("WhatsApp API siap digunakan!");
-  console.log("WhatsApp API siap digunakan!");
-
-  app.listen(PORT, () => {
-    logWithDate(`Server berjalan di port ${PORT}`);
-    console.log(`Server berjalan di port ${PORT}`);
-  });
-});
+client.on("qr", (qr) => qrcode.generate(qr, { small: true }));
+client.on("loading_screen", (percent, message) =>
+  log(`Loading: ${percent}% - ${message}`)
+);
+client.on("auth_failure", () => log("Authentication failure!"));
+client.on("disconnected", () => log("Client disconnected!"));
+client.on("authenticated", () => log("Client authenticated!"));
+client.on("ready", () => startServer());
 
 client.on("message", async (message) => {
-  if (message.body === "!ping") {
-    message.reply("pong");
-    logWithDate(` ${message.from}: pinged!`);
-    console.log(`${message.from}: pinged!`);
-  } else if (message.body === "!logs") {
-    fs.readFile("logs/status.log", "utf8", (err, data) => {
-      if (err) {
-        return;
-      }
-      let lines = data.trim().split("\n");
-      let recentLines = lines.slice(-10).join("\n");
-      message.reply(recentLines);
-      logWithDate(` ${message.from}: !logs`);
-      console.log(`${message.from}: !logs`);
-    });
-  } else if (message.body.startsWith("!deleteMessage,")) {
-    let messageID = message.body.split(",")[1];
-    try {
-      let msg = await client.getMessageById(messageID);
-      if (msg.fromMe) {
-        msg.delete(true);
-        message.reply(`Pesan dengan ID ${messageID} telah dihapus!`);
-        logWithDate(`Pesan dengan ID ${messageID} telah dihapus!`);
-        console.log(`Pesan dengan ID ${messageID} telah dihapus!`);
-      }
-    } catch (error) {
-      logWithDate(`Error getting message: ${error}`);
-      console.log(`Error getting message: ${error}`);
-    }
-  } else if (message.body.startsWith("!AI ")) {
-    let question = message.body.slice(4);
-    try {
-      const response = await getAIResponse(question);
-      message.reply(response);
-      logWithDate(` ${message.from}: ${question}`);
-      console.log(`${message.from}: ${question}`);
-    } catch (error) {
-      logWithDate(`Error getting AI response: ${error}`);
-      console.log(`Error getting AI response: ${error}`);
-    }
-  }
+  const { body, from } = message;
+
+  if (body === "!ping") return handlePing(message, from);
+  if (body === "!logs") return handleLogs(message, from);
+  if (body.startsWith("!deleteMessage,"))
+    return handleDeleteMessage(message, body);
+  if (body.startsWith("!AI ")) return handleAIResponse(message, body, from);
 });
+
+function log(message) {
+  logWithDate(message);
+  console.log(message);
+}
+
+function startServer() {
+  log("WhatsApp API siap digunakan!");
+
+  const server = app.listen(PORT, () => log(`Server berjalan di port ${PORT}`));
+  server.on("error", handleError(server));
+}
+
+function handleError(server) {
+  return (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`Port ${PORT} sudah digunakan, mencoba port lain...`);
+      server.listen(0);
+    } else {
+      throw err;
+    }
+  };
+}
+
+async function handlePing(message, from) {
+  message.reply("pong");
+  log(`${from}: pinged!`);
+}
+
+function handleLogs(message, from) {
+  fs.readFile("logs/status.log", "utf8", (err, data) => {
+    if (err) return;
+    const recentLines = data.trim().split("\n").slice(-10).join("\n");
+    message.reply(recentLines);
+    log(`${from}: !logs`);
+  });
+}
+
+async function handleDeleteMessage(message, body) {
+  const messageID = body.split(",")[1];
+  try {
+    const msg = await client.getMessageById(messageID);
+    if (msg.fromMe) {
+      msg.delete(true);
+      message.reply(`Pesan dengan ID ${messageID} telah dihapus!`);
+      log(`Pesan dengan ID ${messageID} telah dihapus!`);
+    }
+  } catch (error) {
+    log(`Error getting message: ${error}`);
+  }
+}
+
+async function handleAIResponse(message, body, from) {
+  const question = body.slice(4);
+  try {
+    const response = await getAIResponse(question);
+    message.reply(response);
+    log(`${from}: ${question}`);
+  } catch (error) {
+    log(`Error getting AI response: ${error}`);
+  }
+}
