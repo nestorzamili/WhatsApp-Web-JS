@@ -1,8 +1,5 @@
 require("dotenv").config();
 
-process.env.http_proxy = "";
-process.env.https_proxy = "";
-
 const {
   GoogleGenerativeAI,
   HarmCategory,
