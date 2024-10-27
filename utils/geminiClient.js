@@ -1,4 +1,7 @@
-require('dotenv').config();
+require("dotenv").config();
+
+process.env.http_proxy = "";
+process.env.https_proxy = "";
 
 const {
   GoogleGenerativeAI,
@@ -8,7 +11,9 @@ const {
 
 async function getAIResponse(question) {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL_NAME });
+  const model = genAI.getGenerativeModel({
+    model: process.env.GEMINI_MODEL_NAME,
+  });
 
   const generationConfig = {
     temperature: 1,
@@ -39,16 +44,16 @@ async function getAIResponse(question) {
   const chat = model.startChat({
     generationConfig,
     safetySettings,
-    history: [
-    ],
+    history: [],
   });
 
   const result = await chat.sendMessage(question);
   const response = result.response;
-  return response.text()
-    .replace(/#/g, '')
-    .replace(/\*\*(.*?)\*\*/g, '*$1*')
-    .replace(/^\* /gm, '- ');
+  return response
+    .text()
+    .replace(/#/g, "")
+    .replace(/\*\*(.*?)\*\*/g, "*$1*")
+    .replace(/^\* /gm, "- ");
 }
 
 module.exports = getAIResponse;
