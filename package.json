@@ -7,7 +7,7 @@
     "start": "node app.js"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.668.0",
+    "@aws-sdk/client-s3": "^3.670.0",
     "@google/generative-ai": "^0.20.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
