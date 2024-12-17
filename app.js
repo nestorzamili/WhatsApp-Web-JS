@@ -6,6 +6,7 @@ const fs = require("fs");
 const express = require("express");
 const routes = require("./routes");
 const getAIResponse = require("./utils/geminiClient");
+const { exec } = require("child_process");
 
 const app = express();
 const { PORT = 3113 } = process.env;
@@ -72,6 +73,7 @@ client.on("message", async (message) => {
   if (body.startsWith("!deleteMessage,"))
     return handleDeleteMessage(message, body);
   if (body.startsWith("!AI ")) return handleAIResponse(message, body, from);
+  if (body === "!jadwaldeo") return handleSchedule(message, from);
 });
 
 function log(message) {
@@ -134,4 +136,15 @@ async function handleAIResponse(message, body, from) {
   } catch (error) {
     log(`Error getting AI response: ${error}`);
   }
+}
+
+async function handleSchedule(message, from) {
+  exec("python getSchedule.py", (error, stdout) => {
+    if (error) {
+      log(`Error getting schedule: ${error}`);
+      return;
+    }
+    message.reply(stdout);
+    log(`Sending schedule to ${from}`);
+  });
 }
