@@ -139,7 +139,7 @@ async function handleAIResponse(message, body, from) {
 }
 
 async function handleSchedule(message, from) {
-  exec("python getSchedule.py", (error, stdout) => {
+  exec("python3 getSchedule.py", (error, stdout) => {
     if (error) {
       log(`Error getting schedule: ${error}`);
       return;
