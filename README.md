@@ -12,7 +12,6 @@ This is a WhatsApp bot built with Express.js that connects through the WhatsApp 
 - Test response with `!ping`.
 - Check logs with `!logs`.
 - Delete messages by message id `!deleteMessage,yourmessageid` (You can check messageId in the logs😊)
-- ✨ Ask AI with `!AI your question`.✨
 
 ## Usage
 

@@ -5,7 +5,6 @@ const { logWithDate } = require("./utils/logger");
 const fs = require("fs");
 const express = require("express");
 const routes = require("./routes");
-const getAIResponse = require("./utils/geminiClient");
 const { exec } = require("child_process");
 
 const app = express();
@@ -72,7 +71,6 @@ client.on("message", async (message) => {
   if (body === "!logs") return handleLogs(message, from);
   if (body.startsWith("!deleteMessage,"))
     return handleDeleteMessage(message, body);
-  if (body.startsWith("!AI ")) return handleAIResponse(message, body, from);
   if (body === "!jadwaldeo") return handleSchedule(message, from);
 });
 
@@ -124,17 +122,6 @@ async function handleDeleteMessage(message, body) {
     }
   } catch (error) {
     log(`Error getting message: ${error}`);
-  }
-}
-
-async function handleAIResponse(message, body, from) {
-  const question = body.slice(4);
-  try {
-    const response = await getAIResponse(question);
-    message.reply(response);
-    log(`${from}: ${question}`);
-  } catch (error) {
-    log(`Error getting AI response: ${error}`);
   }
 }
 
