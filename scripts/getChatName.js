@@ -1,10 +1,6 @@
-async function getNamesFromIds(client, ids) {
-    const names = [];
-    for (const id of ids) {
-        const chat = await client.getChatById(id);
-        names.push(chat.name);
-    }
-    return names;
+async function getChatName(client, id) {
+  const chat = await client.getChatById(id);
+  return chat.name;
 }
 
-module.exports = getNamesFromIds;
+module.exports = getChatName;
