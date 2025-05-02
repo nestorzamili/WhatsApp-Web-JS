@@ -76,7 +76,13 @@ GET http://localhost:3000/get-group-id
 | Header | Type | Description |
 | :--- | :--- | :--- |
 | `x-api-key` | `string` | **Required**. Your API key |
-| `groupName` | `string` | **Required**. Name of the group |
+
+Request Body:
+```json
+{
+  "groupName": "Name of the group."
+}
+```
 
 ### Send Text Message
 

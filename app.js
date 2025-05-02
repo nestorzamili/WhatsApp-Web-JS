@@ -80,16 +80,16 @@ function log(message) {
 }
 
 function startServer() {
-  log('WhatsApp API siap digunakan!');
+  log('WhatsApp API is ready to use!');
 
-  const server = app.listen(PORT, () => log(`Server berjalan di port ${PORT}`));
+  const server = app.listen(PORT, () => log(`Server running on port ${PORT}`));
   server.on('error', handleError(server));
 }
 
 function handleError(server) {
   return (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`Port ${PORT} sudah digunakan, mencoba port lain...`);
+      console.error(`Port ${PORT} is already in use, trying another port...`);
       server.listen(0);
     } else {
       throw err;
@@ -117,8 +117,8 @@ async function handleDeleteMessage(message, body) {
     const msg = await client.getMessageById(messageID);
     if (msg.fromMe) {
       msg.delete(true);
-      message.reply(`Pesan dengan ID ${messageID} telah dihapus!`);
-      log(`Pesan dengan ID ${messageID} telah dihapus!`);
+      message.reply(`Message with ID ${messageID} has been deleted!`);
+      log(`Message with ID ${messageID} has been deleted!`);
     }
   } catch (error) {
     log(`Error getting message: ${error}`);
