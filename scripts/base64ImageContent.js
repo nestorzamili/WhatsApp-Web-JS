@@ -1,12 +1,12 @@
-const { MessageMedia } = require("whatsapp-web.js");
-const { logWithDate } = require("../utils/logger");
+const { MessageMedia } = require('whatsapp-web.js');
+const { logWithDate } = require('../utils/logger');
 
 async function base64ImageContent(client, caption, base64Images, id) {
   for (let base64Image of base64Images) {
     const media = new MessageMedia(
       base64Image.mimetype,
       base64Image.data,
-      base64Image.filename
+      base64Image.filename,
     );
 
     try {
@@ -16,7 +16,7 @@ async function base64ImageContent(client, caption, base64Images, id) {
         caption: caption,
       });
       logWithDate(
-        `Report berhasil dikirim ke ${groupName} dengan ID pesan: ${sentMessage.id._serialized}`
+        `Report successfully sent to ${groupName} with message ID: ${sentMessage.id._serialized}`,
       );
     } catch (error) {
       logWithDate(`Error sending message: ${error}`);

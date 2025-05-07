@@ -1,4 +1,4 @@
-const { logWithDate } = require("../utils/logger");
+const { logWithDate } = require('../utils/logger');
 
 async function txtContent(client, message, id) {
   try {
@@ -6,7 +6,7 @@ async function txtContent(client, message, id) {
     let groupName = chat.name;
     let sentMessage = await client.sendMessage(id, message);
     logWithDate(
-      `Report berhasil dikirim ke ${groupName} dengan ID pesan: ${sentMessage.id._serialized}`
+      `Report successfully sent to ${groupName} with message ID: ${sentMessage.id._serialized}`,
     );
   } catch (error) {
     logWithDate(`Error sending message: ${error}`);
