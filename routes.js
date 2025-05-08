@@ -9,8 +9,8 @@ const base64ImageContent = require('./scripts/base64ImageContent');
 
 module.exports = function (app, client) {
   // Health check route
-  app.get('/', (res) => {
-    res.send('Server berjalan!');
+  app.get('/', function (req, res) {
+    res.send('Server is running!');
   });
 
   // Send plaintext message to the given id
