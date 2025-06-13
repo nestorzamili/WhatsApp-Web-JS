@@ -4,6 +4,9 @@
 
 This is a WhatsApp bot built with Express.js that connects through the WhatsApp Web browser app and uses the [WhatsApp Web JS](https://wwebjs.dev/) client library for the WhatsApp Web API.
 
+## GitAds Sponsored
+[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=nestorzamili/whatsapp-web-js@github)](https://gitads.dev/v1/ad-track?source=nestorzamili/whatsapp-web-js@github)
+
 ## Features
 
 - Send text messages to multiple individuals or groups simultaneously via API
