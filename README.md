@@ -1,3 +1,5 @@
+<!-- GitAds-Verify: 9WEWXRM3CHOGNTF3NUQUJ486O4J8DX91 -->
+
 # Simple WhatsApp Bot
 
 This is a WhatsApp bot built with Express.js that connects through the WhatsApp Web browser app and uses the [WhatsApp Web JS](https://wwebjs.dev/) client library for the WhatsApp Web API.
