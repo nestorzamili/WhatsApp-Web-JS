@@ -2,6 +2,7 @@ require('dotenv').config();
 const qrcode = require('qrcode-terminal');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const { logWithDate } = require('./utils/logger');
+const puppeteerConfig = require('./utils/puppeteerConfig');
 const fs = require('fs');
 const express = require('express');
 const routes = require('./routes');
@@ -15,39 +16,7 @@ app.use(express.text());
 app.use(express.urlencoded({ extended: true }));
 
 const client = new Client({
-  puppeteer: {
-    headless: true,
-    args: [
-      '--disable-accelerated-2d-canvas',
-      '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--disable-breakpad',
-      '--disable-cache',
-      '--disable-component-extensions-with-background-pages',
-      '--disable-crash-reporter',
-      '--disable-dev-shm-usage',
-      '--disable-extensions',
-      '--disable-gpu',
-      '--disable-hang-monitor',
-      '--disable-ipc-flooding-protection',
-      '--disable-mojo-local-storage',
-      '--disable-notifications',
-      '--disable-popup-blocking',
-      '--disable-print-preview',
-      '--disable-prompt-on-repost',
-      '--disable-renderer-backgrounding',
-      '--disable-software-rasterizer',
-      '--ignore-certificate-errors',
-      '--log-level=3',
-      '--no-default-browser-check',
-      '--no-first-run',
-      '--no-sandbox',
-      '--no-zygote',
-      '--renderer-process-limit=100',
-      '--enable-gpu-rasterization',
-      '--enable-zero-copy',
-    ],
-  },
+  puppeteer: puppeteerConfig,
   authStrategy: new LocalAuth(),
   dataPath: 'session',
 });
