@@ -56,7 +56,7 @@ module.exports = function (app, client) {
   );
 
   // Get group ID by group name
-  app.post('/get-group-id', verifyKey, async (req, res) => {
+  app.get('/get-group-id', verifyKey, async (req, res) => {
     const { groupName } = req.body;
     if (!groupName)
       return res.status(400).send('Bad Request: Group Name is required!');

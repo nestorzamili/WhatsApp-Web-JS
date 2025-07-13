@@ -3,10 +3,9 @@ const qrcode = require('qrcode-terminal');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const { logWithDate } = require('./utils/logger');
 const puppeteerConfig = require('./utils/puppeteerConfig');
-const fs = require('fs');
 const express = require('express');
 const routes = require('./routes');
-const { exec } = require('child_process');
+const handleMessage = require('./handlers/messageHandler');
 
 const app = express();
 const { PORT = 3113 } = process.env;
@@ -34,13 +33,7 @@ client.on('authenticated', () => log('Client authenticated!'));
 client.on('ready', () => startServer());
 
 client.on('message', async (message) => {
-  const { body, from } = message;
-
-  if (body === '!ping') return handlePing(message, from);
-  if (body === '!logs') return handleLogs(message, from);
-  if (body.startsWith('!deleteMessage,'))
-    return handleDeleteMessage(message, body);
-  if (body === '!jadwaldeo') return handleSchedule(message, from);
+  await handleMessage(client, message);
 });
 
 function log(message) {
@@ -64,45 +57,4 @@ function handleError(server) {
       throw err;
     }
   };
-}
-
-async function handlePing(message, from) {
-  message.reply('pong');
-  log(`${from}: pinged!`);
-}
-
-function handleLogs(message, from) {
-  fs.readFile('logs/status.log', 'utf8', (err, data) => {
-    if (err) return;
-    const recentLines = data.trim().split('\n').slice(-10).join('\n');
-    message.reply(recentLines);
-    log(`${from}: !logs`);
-  });
-}
-
-async function handleDeleteMessage(message, body) {
-  const messageID = body.split(',')[1];
-  try {
-    const msg = await client.getMessageById(messageID);
-    if (msg.fromMe) {
-      msg.delete(true);
-      message.reply(`Message with ID ${messageID} has been deleted!`);
-      log(`Message with ID ${messageID} has been deleted!`);
-    }
-  } catch (error) {
-    log(`Error getting message: ${error}`);
-  }
-}
-
-// Example function to interact with Python script
-// This function assumes you have a Python script named getSchedule.py
-async function handleSchedule(message, from) {
-  exec('python3 getSchedule.py', (error, stdout) => {
-    if (error) {
-      log(`Error getting schedule: ${error}`);
-      return;
-    }
-    message.reply(stdout);
-    log(`Sending schedule to ${from}`);
-  });
 }
