@@ -1,5 +1,5 @@
 /**
- * Command definitions with their configurations
+ * Command definitions
  */
 export const COMMANDS = {
   ping: {
@@ -28,6 +28,8 @@ export const COMMANDS = {
     errorMessage:
       'Error retrieving desa brilliant data. Please try again later.',
     noDataMessage: 'No desa brilliant data available.',
+    allowedGroups: ['groupid@g.us'],
+    groupOnly: true,
   },
 
   briva: {
@@ -38,9 +40,7 @@ export const COMMANDS = {
     errorMessage: 'Error executing briva script. Please try again later.',
     noDataMessage: 'No briva data available.',
     paramFormat: 'Format: !briva: <parameter>',
-    allowedGroups: [
-      '120363185522082107@g.us', // Test Node.js 1
-    ],
+    allowedGroups: ['groupid@g.us'],
     groupOnly: true,
   },
 };
