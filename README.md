@@ -1,178 +1,165 @@
-<!-- GitAds-Verify: 9WEWXRM3CHOGNTF3NUQUJ486O4J8DX91 -->
-
 # Simple WhatsApp Bot
 
-This is a WhatsApp bot built with Express.js that connects through the WhatsApp Web browser app and uses the [WhatsApp Web JS](https://wwebjs.dev/) client library for the WhatsApp Web API.
+Simple WhatsApp bot built with Express.js, featuring clean architecture and comprehensive API endpoints.
 
-## GitAds Sponsored
-[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=nestorzamili/whatsapp-web-js@github)](https://gitads.dev/v1/ad-track?source=nestorzamili/whatsapp-web-js@github)
-
-## Features
-
-- Send text messages to multiple individuals or groups simultaneously via API
-- Send file messages with or without captions to multiple individuals or groups via API
-- Send images as base64 to multiple individuals or groups via API
-- Check WhatsApp Group IDs
-- Test response with `!ping` command
-- Check logs with `!logs` command
-- Delete messages by message ID with `!deleteMessage,yourmessageid` command (You can check messageId in the logs)
-
-## Installation
+## 🚀 Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/nestorzamili/whatsapp-web.js.git
+   git clone https://github.com/nestorzamili/whatsapp-web-js.git
+   cd whatsapp-web-js
    ```
 
-2. Install the dependencies:
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-3. Create a `.env` file in the root directory with the following variables:
-   ```
-   PORT=3000
+3. Create `.env` file:
+   ```env
+   PORT=3113
    API_KEY=your_api_key_here
-   
-   # Only required for remote authentication (AWS S3)
-   AWS_REGION=your_aws_region
-   AWS_ACCESS_KEY_ID=your_aws_access_key
-   AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-   AWS_BUCKET_NAME=your_s3_bucket_name
-   AWS_REMOTE_DATA_PATH=your_remote_path
    ```
 
-4. Start the bot:
+4. Start the application:
    ```bash
    npm start
    ```
 
-The bot will display a QR code in the terminal. Scan this QR code with your phone to log in to WhatsApp Web and start using the bot.
+5. Scan the QR code with your WhatsApp to authenticate
 
-## Authentication Options
+## 🔐 API Key Generation
 
-The bot offers two authentication strategies:
-
-- **Local Authentication**: Uses `app.js` to store WhatsApp session data locally
-- **Remote Authentication**: Uses `remoteAuth.js` to store session data in AWS S3
-
-To use Remote Authentication with AWS S3, make sure you have properly configured the AWS environment variables in your `.env` file.
-
-## API Key Generation
-
-Generate your API key using Node.js in your terminal:
+Generate a secure API key:
 
 ```bash
 echo "samunu_$(openssl rand -hex 32)"
 ```
 
-Copy the generated key to the `API_KEY` variable in your `.env` file.
+## 🌐 API Documentation
 
-## API Usage
+All endpoints require the `x-api-key` header for authentication.
 
-All API endpoints require authentication via the `x-api-key` header.
+### Health Check
 
-### Get Group ID
+**Endpoint:** `GET /`
 
-```
-GET http://localhost:3000/get-group-id
-```
-
-| Header | Type | Description |
-| :--- | :--- | :--- |
-| `x-api-key` | `string` | **Required**. Your API key |
-
-Request Body:
+**Response:**
 ```json
 {
-  "groupName": "Name of the group."
+  "status": "success",
+  "message": "Server is running healthy",
+  "data": {
+    "status": "healthy",
+    "uptime": "1h 0m 0s"
+  }
 }
 ```
 
-### Send Text Message
+**Endpoint:** `POST /send-message`
 
-```
-POST http://localhost:3000/send-plaintext
-```
-
-| Header | Type | Description |
-| :--- | :--- | :--- |
-| `x-api-key` | `string` | **Required**. Your API key |
-| `Content-Type` | `application/json` | **Required**. |
-
-Request Body:
+**Send Text Message (Multiple Recipients):**
 ```json
 {
-  "message": "Your message here",
-  "id": "123456789@g.us,987654321@c.us"
+  "id": [
+    "6281234567890@c.us",
+    "6281234567891@c.us",
+    "120363185522082107@g.us"
+  ],
+  "message": "Hello World!"
 }
 ```
 
-The `id` parameter can contain multiple IDs separated by commas without spaces.
-
-### Send File
-
-```
-POST http://localhost:3000/send-file
-```
-
-| Header | Type | Description |
-| :--- | :--- | :--- |
-| `x-api-key` | `string` | **Required**. Your API key |
-
-Form Data:
-- `id` (string): **Required**. Recipient ID(s), separate multiple with comma
-- `caption` (string): Optional caption text
-- `attachment` (file): **Required**. File to send
-
-### Send Base64 Image
-
-```
-POST http://localhost:3000/send-base64-image
+**Send Files with Caption:**
+```bash
+# Form data
+id: ["6281234567890@c.us"]
+caption: "Check this file"
+attachment: [file upload]
 ```
 
-| Header | Type | Description |
-| :--- | :--- | :--- |
-| `x-api-key` | `string` | **Required**. Your API key |
-| `Content-Type` | `application/json` | **Required**. |
-
-Request Body:
+**Send Base64 Images:**
 ```json
 {
-  "id": "123456789@g.us",
-  "caption": "Optional image caption",
+  "id": ["6281234567890@c.us"], 
+  "caption": "Check these images",
   "images": [
     {
       "mimetype": "image/jpeg",
-      "data": "base64encodedstring...",
-      "filename": "image1.jpg"
-    },
-    {
-      "mimetype": "image/png",
-      "data": "base64encodedstring...",
-      "filename": "image2.png"
+      "data": "base64string...",
+      "filename": "image.jpg"
     }
   ]
 }
 ```
 
-## WhatsApp Commands
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Message sent to all recipients",
+  "data": {
+    "total": 1,
+    "success": 1,
+    "failed": 0
+  }
+}
+```
 
-The bot responds to the following commands in WhatsApp chats:
+### Get Group ID
 
-- `!ping`: Tests if the bot is active; it will respond with "pong"
-- `!logs`: Shows the last 10 lines from the log file
-- `!deleteMessage,messageID`: Deletes a message with the specified ID (only works for messages sent by the bot)
+**Endpoint:** `GET /get-group-id?groupName=YourGroupName`
 
-## Documentation
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Group found successfully",
+  "data": {
+    "groupName": "YourGroupName",
+    "groupId": "120363185522082107@g.us"
+  }
+}
+```
 
-For more details about the WhatsApp Web JS library, visit:
-https://docs.wwebjs.dev/
+## 🔧 Adding New Commands
 
-## Contributing
+1. Add command configuration in `utils/commands.js`:
+```javascript
+export const COMMANDS = {
+  // ...existing commands...
+  
+  newcommand: {
+    type: 'script',
+    script: 'python3 your-script.py',
+    cwd: 'samunu',
+    successMessage: 'Data sent to',
+    errorMessage: 'Error retrieving data',
+    noDataMessage: 'No data available'
+  }
+}
+```
 
-Contributions are always welcome! Please fork this repository and submit pull requests.
+2. Command will be automatically handled by the service layer
 
-## License
+## 📚 Documentation
 
-This project is licensed under the Apache-2.0 License. See the `LICENSE` file for more details.
+- [WhatsApp Web JS Documentation](https://docs.wwebjs.dev/)
+- [Express.js Documentation](https://expressjs.com/)
+
+## 🤝 Contributing
+
+We welcome contributions! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the Apache-2.0 License. See the `LICENSE` file for details.
+
+---
+
+**Built with ❤️ using modern JavaScript and clean architecture principles.**

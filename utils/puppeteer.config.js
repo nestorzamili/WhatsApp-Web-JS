@@ -32,4 +32,4 @@ const puppeteerConfig = {
   ],
 };
 
-module.exports = puppeteerConfig;
+export default puppeteerConfig;
