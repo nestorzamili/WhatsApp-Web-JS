@@ -5,39 +5,55 @@ import {
   HTTP_STATUS,
   ERROR_CODES,
 } from '../utils/response.js';
-import {
-  getContentType,
-  capitalize,
-  formatUptime,
-  isEmpty,
-} from '../utils/helpers.js';
+import { formatUptime, isEmpty } from '../utils/helpers.js';
 
 export const sendMessageController = async (req, res, client) => {
   try {
-    const { message, caption, id, images } = req.body;
+    const { message, id, attachment } = req.body;
     const attachmentFiles = req.files;
 
-    if (!Array.isArray(id) || id.length === 0) {
+    if (!id || id.trim() === '') {
       return sendErrorResponse(
         res,
-        'ID must be an array with at least one element',
+        'ID is required',
         ERROR_CODES.MISSING_ID,
         null,
         HTTP_STATUS.BAD_REQUEST,
       );
     }
 
-    const contentType = getContentType(attachmentFiles, images);
+    const targetIds = id
+      .split(',')
+      .map((i) => i.trim())
+      .filter((i) => i);
+
+    if (targetIds.length === 0) {
+      return sendErrorResponse(
+        res,
+        'At least one valid ID is required',
+        ERROR_CODES.MISSING_ID,
+        null,
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+
+    // Support both file upload and file path via unified 'attachment' parameter
+    const attachmentPaths = attachment
+      ? attachment
+          .split(',')
+          .map((p) => p.trim())
+          .filter((p) => p)
+      : null;
+
     const errors = [];
     let successCount = 0;
 
-    for (const targetId of id) {
+    for (const targetId of targetIds) {
       try {
         await sendMessage(client, targetId, {
           text: message,
-          caption,
           files: attachmentFiles,
-          base64Images: images,
+          filePaths: attachmentPaths,
         });
         successCount++;
       } catch (error) {
@@ -48,7 +64,7 @@ export const sendMessageController = async (req, res, client) => {
       }
     }
 
-    const totalCount = id.length;
+    const totalCount = targetIds.length;
 
     return sendSuccessResponse(
       res,
@@ -59,10 +75,8 @@ export const sendMessageController = async (req, res, client) => {
         ...(errors.length > 0 && { errors }),
       },
       successCount === totalCount
-        ? `${capitalize(contentType)} sent to all recipients`
-        : `${capitalize(
-            contentType,
-          )} sent to ${successCount}/${totalCount} recipients`,
+        ? 'Sent to all recipients'
+        : `Sent to ${successCount}/${totalCount} recipients`,
     );
   } catch (error) {
     return sendErrorResponse(

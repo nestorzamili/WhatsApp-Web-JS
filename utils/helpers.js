@@ -1,14 +1,3 @@
-export const getContentType = (attachmentFiles, images) => {
-  if (attachmentFiles && attachmentFiles.length > 0) return 'files';
-  if (images && images.length > 0) return 'images';
-  return 'message';
-};
-
-export const capitalize = (str) => {
-  if (!str) return '';
-  return str.charAt(0).toUpperCase() + str.slice(1);
-};
-
 export const formatUptime = (seconds) => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);

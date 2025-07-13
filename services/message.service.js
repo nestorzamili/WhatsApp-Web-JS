@@ -1,31 +1,41 @@
-import { extname } from 'path';
+import { readFileSync, existsSync } from 'fs';
 import whatsappWeb from 'whatsapp-web.js';
 import { logWithDate } from '../utils/logger.js';
+import { getMimeType, isWhatsAppSupported } from '../utils/mimeTypes.js';
 
 const { MessageMedia } = whatsappWeb;
 
 async function sendMessage(client, id, options = {}) {
-  const { text, caption, files, base64Images } = options;
+  const { text, files, filePaths } = options;
 
   try {
     const chat = await client.getChatById(id);
     const chatName = chat.name || chat.id._serialized;
 
-    // Send text message
-    if (text) {
-      const sentMessage = await client.sendMessage(id, text);
-      logWithDate(
-        `Text message sent to ${chatName} with ID: ${sentMessage.id._serialized}`,
-      );
-      return sentMessage;
+    // Send files from file paths
+    if (filePaths && filePaths.length > 0) {
+      const results = [];
+      for (const filePath of filePaths) {
+        const media = createMediaFromPath(filePath);
+        const sentMessage = await client.sendMessage(id, media, {
+          caption: text,
+        });
+        logWithDate(
+          `File "${filePath}" sent to ${chatName} with ID: ${sentMessage.id._serialized}`,
+        );
+        results.push(sentMessage);
+      }
+      return results;
     }
 
-    // Send files
+    // Send files from upload
     if (files && files.length > 0) {
       const results = [];
       for (const file of files) {
         const media = createMediaFromFile(file);
-        const sentMessage = await client.sendMessage(id, media, { caption });
+        const sentMessage = await client.sendMessage(id, media, {
+          caption: text,
+        });
         logWithDate(
           `File "${file.originalname}" sent to ${chatName} with ID: ${sentMessage.id._serialized}`,
         );
@@ -34,18 +44,13 @@ async function sendMessage(client, id, options = {}) {
       return results;
     }
 
-    // Send base64 images
-    if (base64Images && base64Images.length > 0) {
-      const results = [];
-      for (const image of base64Images) {
-        const media = createMediaFromBase64(image);
-        const sentMessage = await client.sendMessage(id, media, { caption });
-        logWithDate(
-          `Base64 image sent to ${chatName} with ID: ${sentMessage.id._serialized}`,
-        );
-        results.push(sentMessage);
-      }
-      return results;
+    // Send text message only
+    if (text) {
+      const sentMessage = await client.sendMessage(id, text);
+      logWithDate(
+        `Text message sent to ${chatName} with ID: ${sentMessage.id._serialized}`,
+      );
+      return sentMessage;
     }
 
     throw new Error('No content provided to send');
@@ -59,21 +64,11 @@ async function sendMessage(client, id, options = {}) {
  * Create MessageMedia from file object (multer)
  */
 function createMediaFromFile(file) {
-  const ext = extname(file.originalname).toLowerCase();
-
-  let mimetype = file.mimetype;
-  // Fix mimetype for common cases
-  if (mimetype === 'application/octet-stream') {
-    if (ext === '.jpg' || ext === '.jpeg') {
-      mimetype = 'image/jpeg';
-    } else if (ext === '.png') {
-      mimetype = 'image/png';
-    } else if (ext === '.gif') {
-      mimetype = 'image/gif';
-    } else if (ext === '.pdf') {
-      mimetype = 'application/pdf';
-    }
+  if (!isWhatsAppSupported(file.originalname)) {
+    throw new Error(`Unsupported file type: ${file.originalname}`);
   }
+
+  const mimetype = getMimeType(file.originalname, file.mimetype);
 
   return new MessageMedia(
     mimetype,
@@ -83,14 +78,23 @@ function createMediaFromFile(file) {
 }
 
 /**
- * Create MessageMedia from base64 image object
+ * Create MessageMedia from file path
  */
-function createMediaFromBase64(image) {
-  return new MessageMedia(
-    image.mimetype || 'image/jpeg',
-    image.data,
-    image.filename || 'image',
-  );
+function createMediaFromPath(filePath) {
+  if (!existsSync(filePath)) {
+    throw new Error(`File not found: ${filePath}`);
+  }
+
+  const filename = filePath.split('/').pop();
+
+  if (!isWhatsAppSupported(filename)) {
+    throw new Error(`Unsupported file type: ${filename}`);
+  }
+
+  const data = readFileSync(filePath, { encoding: 'base64' });
+  const mimetype = getMimeType(filename);
+
+  return new MessageMedia(mimetype, data, filename);
 }
 
 /**
@@ -137,5 +141,5 @@ export {
   getChatName,
   getGroupID,
   createMediaFromFile,
-  createMediaFromBase64,
+  createMediaFromPath,
 };
