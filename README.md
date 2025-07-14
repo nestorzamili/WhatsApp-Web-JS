@@ -17,7 +17,7 @@ Simple WhatsApp bot built with Express.js, featuring clean architecture and comp
 
 3. Create `.env` file:
    ```env
-   PORT=3113
+   PORT=3000
    API_KEY=your_api_key_here
    ```
 
@@ -28,19 +28,30 @@ Simple WhatsApp bot built with Express.js, featuring clean architecture and comp
 
 5. Scan the QR code with your WhatsApp to authenticate
 
-## 🔐 API Key Generation
+## 🔐 Authentication
 
-Generate a secure API key:
+All API endpoints require authentication via the `x-api-key` header.
 
+### Generate API Key
 ```bash
-echo "samunu_$(openssl rand -hex 32)"
+node -e "console.log('whatsapp_' + require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Or use OpenSSL:
+```bash
+echo "whatsapp_$(openssl rand -hex 32)"
 ```
 
 ## 🌐 API Documentation
 
 All endpoints require the `x-api-key` header for authentication.
 
-**Important**: All POST requests must use `multipart/form-data` content type.
+### Content Type Support
+
+The API supports two content types for flexible usage:
+
+1. **application/json** - For text messages and file paths only
+2. **multipart/form-data** - For file uploads with optional text and file paths
 
 ### Health Check
 
@@ -60,82 +71,91 @@ All endpoints require the `x-api-key` header for authentication.
 
 ### Send Message
 
-**Endpoint:** `POST /api/send-message`
+**Endpoint:** `POST /send-message`
 
-**Content-Type:** `multipart/form-data`
-
-#### Send Text Message
+#### Send Text Message (JSON)
 ```bash
-curl -X POST http://localhost:3000/api/send-message \
+curl -X POST http://localhost:3000/send-message \
   -H "x-api-key: your_api_key" \
-  -H "Content-Type: multipart/form-data" \
-  -F "id=6281234567890@c.us" \
-  -F "message=Hello World!"
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": ["6281234567890@c.us"],
+    "message": "Hello World!"
+  }'
 ```
 
 #### Send Text Message (Multiple Recipients)
 ```bash
-curl -X POST http://localhost:3000/api/send-message \
+curl -X POST http://localhost:3000/send-message \
   -H "x-api-key: your_api_key" \
-  -H "Content-Type: multipart/form-data" \
-  -F "id=6281234567890@c.us,6281234567891@c.us,120363185522082107@g.us" \
-  -F "message=Hello everyone!"
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": ["6281234567890@c.us", "6281234567891@c.us", "120363185522082107@g.us"],
+    "message": "Hello everyone!"
+  }'
 ```
 
-#### Send File Upload with Caption
+#### Send File from Path (JSON)
 ```bash
-curl -X POST http://localhost:3000/api/send-message \
+curl -X POST http://localhost:3000/send-message \
   -H "x-api-key: your_api_key" \
-  -H "Content-Type: multipart/form-data" \
-  -F "id=6281234567890@c.us" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": ["6281234567890@c.us"],
+    "message": "File from server",
+    "filePaths": ["/home/user/documents/file.pdf", "/path/to/image.jpg"]
+  }'
+```
+
+#### Send File Upload with Caption (Form-Data)
+```bash
+curl -X POST http://localhost:3000/send-message \
+  -H "x-api-key: your_api_key" \
+  -F "id[]=6281234567890@c.us" \
   -F "message=Check this file" \
   -F "files=@/path/to/your/file.jpg"
 ```
 
-#### Send File from Path (Ubuntu/Linux)
+#### Send Mixed Files (Form-Data)
 ```bash
-curl -X POST http://localhost:3000/api/send-message \
+curl -X POST http://localhost:3000/send-message \
   -H "x-api-key: your_api_key" \
-  -H "Content-Type: multipart/form-data" \
-  -F "id=6281234567890@c.us" \
-  -F "message=File from server" \
-  -F "attachment=/home/user/documents/file.pdf"
-```
-
-#### Send Multiple Files (Mixed Methods)
-```bash
-curl -X POST http://localhost:3000/api/send-message \
-  -H "x-api-key: your_api_key" \
-  -H "Content-Type: multipart/form-data" \
-  -F "id=6281234567890@c.us,6281234567891@c.us" \
+  -F "id[]=6281234567890@c.us" \
+  -F "id[]=6281234567891@c.us" \
   -F "message=Multiple files example" \
   -F "files=@/local/upload/file1.jpg" \
-  -F "attachment=/server/path/file2.pdf,/server/path/file3.docx"
+  -F "filePaths[]=/server/path/file2.pdf" \
+  -F "filePaths[]=/server/path/file3.docx"
 ```
 
 **Response:**
 ```json
 {
-  "status": "success", 
-  "message": "Messages sent successfully",
+  "status": "success",
+  "message": "Sent to all recipients",
   "data": {
-    "results": [
+    "total": 2,
+    "success": 2,
+    "failed": 0
+  }
+}
+```
+
+**Error Response (Partial Success):**
+```json
+{
+  "status": "success",
+  "message": "Sent to 1/2 recipients",
+  "data": {
+    "total": 2,
+    "success": 1,
+    "failed": 1,
+    "errors": [
       {
-        "id": "6281234567890@c.us",
-        "success": true,
-        "messageId": "3EB0123456789ABCDEF"
-      },
-      {
-        "id": "6281234567891@c.us", 
-        "success": true,
-        "messageId": "3EB0987654321FEDCBA"
+        "id": "invalid@c.us",
+        "error": "Chat not found"
       }
-    ],
-    "summary": {
-      "total": 2,
-      "successful": 2,
-      "failed": 0
-    }
+    ]
   }
 }
 ```
@@ -148,7 +168,7 @@ curl -X POST http://localhost:3000/api/send-message \
 
 ### Get Group ID
 
-**Endpoint:** `GET /api/get-group-id?groupName=YourGroupName`
+**Endpoint:** `GET /get-group-id?groupName=YourGroupName`
 
 **Response:**
 ```json
@@ -162,20 +182,31 @@ curl -X POST http://localhost:3000/api/send-message \
 }
 ```
 
-## 🔧 Development Features
+## 🔧 API Parameters
 
-### File Input Methods
+### Send Message Parameters
 
-The API supports flexible file input methods for different deployment scenarios:
+| Parameter | Type | Required | Description | Content-Type |
+|-----------|------|----------|-------------|--------------|
+| `id` | array | ✅ | Array of WhatsApp IDs | Both |
+| `message` | string | ✅ | Text message content | Both |
+| `filePaths` | array | ❌ | Array of server file paths | Both |
+| `files` | file(s) | ❌ | Upload file(s) via form-data | multipart only |
 
-1. **File Upload** (Web/Form scenarios):
-   - Use `files` parameter with multipart form-data
-   - Suitable for web interfaces and direct uploads
+*At least one of: `message`, `files`, or `filePaths` is required.
 
-2. **File Path** (Server/Ubuntu scenarios):
-   - Use `attachment` parameter with absolute file paths
-   - Ideal for server-side automation and scheduled tasks
-   - Supports comma-separated multiple file paths
+### Content Type Guidelines
+
+- **Use JSON** (`application/json`) for:
+  - Text-only messages
+  - Server-side file paths
+  - API integrations
+  - Lightweight requests
+
+- **Use Form-Data** (`multipart/form-data`) for:
+  - File uploads from client
+  - Mixed file sources (upload + paths)
+  - Web form submissions
 
 
 ## 📚 Documentation

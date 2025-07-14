@@ -1,5 +1,5 @@
 import verifyKey from '../middlewares/auth.middleware.js';
-import { uploadFiles } from '../middlewares/upload.middleware.js';
+import { conditionalUpload } from '../middlewares/upload.middleware.js';
 import {
   sendMessageController,
   getGroupIdController,
@@ -9,7 +9,7 @@ import {
 export default function (app, client) {
   app.get('/', healthCheckController);
 
-  app.post('/send-message', verifyKey, uploadFiles, (req, res) =>
+  app.post('/send-message', verifyKey, conditionalUpload, (req, res) =>
     sendMessageController(req, res, client),
   );
 

@@ -1,13 +1,9 @@
 import { exec } from 'child_process';
 import { logWithDate } from '../utils/logger.js';
-import { COMMANDS } from '../utils/commands.js';
+import { findCommand } from '../utils/commands.js';
 
-/**
- * Universal command handler
- */
-async function handleCommand(client, message, commandName, parameter = null) {
-  const { body, from } = message;
-  const command = COMMANDS[commandName];
+async function handleCommand(message, commandName, command, parameter = null) {
+  const { from } = message;
 
   if (!command) {
     logWithDate(`Unknown command: ${commandName}`);
@@ -15,12 +11,10 @@ async function handleCommand(client, message, commandName, parameter = null) {
   }
 
   try {
-    // Handle simple commands (like ping)
     if (command.type === 'simple') {
-      return await command.handler(message, from);
+      return await handleSimpleCommand(message, from, command);
     }
 
-    // Handle script-based commands
     if (command.type === 'script' || command.type === 'script_with_param') {
       return await handleScriptCommand(message, from, command, parameter);
     }
@@ -30,11 +24,18 @@ async function handleCommand(client, message, commandName, parameter = null) {
   }
 }
 
-/**
- * Handle script execution commands
- */
+async function handleSimpleCommand(message, from, command) {
+  if (command.reply) {
+    await message.reply(command.reply);
+    logWithDate(
+      `${from}: ${command.pattern} executed - replied with: ${command.reply}`,
+    );
+  } else {
+    logWithDate(`Simple command ${command.pattern} has no reply configured`);
+  }
+}
+
 async function handleScriptCommand(message, from, command, parameter) {
-  // Check group restrictions for briva
   if (command.groupOnly) {
     const chat = await message.getChat();
 
@@ -45,7 +46,7 @@ async function handleScriptCommand(message, from, command, parameter) {
       return;
     }
 
-    if (command.allowedGroups && command.allowedGroups.length > 0) {
+    if (command.allowedGroups.length > 0) {
       if (!command.allowedGroups.includes(chat.id._serialized)) {
         logWithDate(
           `${command.script} command attempted from unauthorized group: ${chat.name} (${chat.id._serialized})`,
@@ -55,16 +56,14 @@ async function handleScriptCommand(message, from, command, parameter) {
     }
   }
 
-  // Handle parameter validation for parameterized commands
   if (command.type === 'script_with_param') {
     if (!parameter || parameter.trim() === '') {
-      await message.reply(command.paramFormat);
+      logWithDate(`Missing parameter for ${command.script} from ${from}`);
       return;
     }
     parameter = parameter.trim();
   }
 
-  // Build command
   let scriptCommand = command.script;
   if (parameter) {
     scriptCommand += ` "${parameter}"`;
@@ -73,7 +72,6 @@ async function handleScriptCommand(message, from, command, parameter) {
     logWithDate(`Executing ${command.script}`);
   }
 
-  // Execute script
   exec(scriptCommand, { cwd: command.cwd }, async (error, stdout, stderr) => {
     if (error) {
       logWithDate(`Error executing ${command.script}: ${error}`);
@@ -95,29 +93,15 @@ async function handleScriptCommand(message, from, command, parameter) {
   });
 }
 
-/**
- * Main message handler that routes commands
- */
-async function handleMessage(client, message) {
-  const { body, from } = message;
+async function handleMessage(message) {
+  const { body } = message;
 
   try {
-    // Parse command and parameters
-    if (body === '!ping') {
-      return await handleCommand(client, message, 'ping');
-    }
+    const commandMatch = findCommand(body);
 
-    if (body === '!jadwaldeo') {
-      return await handleCommand(client, message, 'jadwaldeo');
-    }
-
-    if (body.startsWith('!briva:')) {
-      const parameter = body.substring(7).trim();
-      return await handleCommand(client, message, 'briva', parameter);
-    }
-
-    if (body === '!desabrillian') {
-      return await handleCommand(client, message, 'desabrillian');
+    if (commandMatch) {
+      const { commandName, config, parameter } = commandMatch;
+      return await handleCommand(message, commandName, config, parameter);
     }
   } catch (error) {
     logWithDate(`Error handling message: ${error}`);

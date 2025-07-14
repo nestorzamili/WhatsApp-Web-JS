@@ -9,23 +9,20 @@ import { formatUptime, isEmpty } from '../utils/helpers.js';
 
 export const sendMessageController = async (req, res, client) => {
   try {
-    const { message, id, attachment } = req.body;
-    const attachmentFiles = req.files;
+    const { message, id, filePaths } = req.body;
+    const files = req.files;
 
-    if (!id || id.trim() === '') {
+    if (!Array.isArray(id) || id.length === 0) {
       return sendErrorResponse(
         res,
-        'ID is required',
+        'ID must be a non-empty array',
         ERROR_CODES.MISSING_ID,
         null,
         HTTP_STATUS.BAD_REQUEST,
       );
     }
 
-    const targetIds = id
-      .split(',')
-      .map((i) => i.trim())
-      .filter((i) => i);
+    const targetIds = id.map((i) => String(i).trim()).filter(Boolean);
 
     if (targetIds.length === 0) {
       return sendErrorResponse(
@@ -37,13 +34,34 @@ export const sendMessageController = async (req, res, client) => {
       );
     }
 
-    // Support both file upload and file path via unified 'attachment' parameter
-    const attachmentPaths = attachment
-      ? attachment
-          .split(',')
-          .map((p) => p.trim())
-          .filter((p) => p)
-      : null;
+    let attachmentPaths = null;
+    if (filePaths) {
+      if (!Array.isArray(filePaths)) {
+        return sendErrorResponse(
+          res,
+          'filePaths must be an array',
+          ERROR_CODES.INVALID_INPUT,
+          null,
+          HTTP_STATUS.BAD_REQUEST,
+        );
+      }
+      attachmentPaths = filePaths.map((p) => String(p).trim()).filter(Boolean);
+
+      if (attachmentPaths.length === 0) {
+        attachmentPaths = null;
+      }
+    }
+
+    // Validasi konten
+    if (!message?.trim() && !files?.length && !attachmentPaths?.length) {
+      return sendErrorResponse(
+        res,
+        'Message text, files, or file paths are required',
+        ERROR_CODES.MISSING_CONTENT,
+        null,
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
 
     const errors = [];
     let successCount = 0;
@@ -51,8 +69,8 @@ export const sendMessageController = async (req, res, client) => {
     for (const targetId of targetIds) {
       try {
         await sendMessage(client, targetId, {
-          text: message,
-          files: attachmentFiles,
+          message: message?.trim() || null,
+          files,
           filePaths: attachmentPaths,
         });
         successCount++;
@@ -65,6 +83,7 @@ export const sendMessageController = async (req, res, client) => {
     }
 
     const totalCount = targetIds.length;
+    const isFullSuccess = successCount === totalCount;
 
     return sendSuccessResponse(
       res,
@@ -74,7 +93,7 @@ export const sendMessageController = async (req, res, client) => {
         failed: totalCount - successCount,
         ...(errors.length > 0 && { errors }),
       },
-      successCount === totalCount
+      isFullSuccess
         ? 'Sent to all recipients'
         : `Sent to ${successCount}/${totalCount} recipients`,
     );
