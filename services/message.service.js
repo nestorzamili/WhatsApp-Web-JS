@@ -90,7 +90,9 @@ function createMedia(filename, base64Data, fallbackMimeType = null) {
     throw new Error(`Unsupported file type: ${filename}`);
   }
 
-  const mimetype = getMimeType(filename, fallbackMimeType);
+  const mimetype = fallbackMimeType === null
+    ? getMimeType(filename)
+    : getMimeType(filename, fallbackMimeType);
   return new MessageMedia(mimetype, base64Data, filename);
 }
 
