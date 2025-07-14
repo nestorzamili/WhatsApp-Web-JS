@@ -4,6 +4,19 @@
 
 Simple WhatsApp bot built with Express.js, featuring clean architecture and comprehensive API endpoints.
 
+## 📑 Navigation
+- [🚀 Installation](#-installation)
+- [🔐 Authentication](#-authentication)
+- [➕ Adding a New Command](#-adding-a-new-command)
+- [🌐 API Documentation](#-api-documentation)
+  - [Health Check](#health-check)
+  - [Send Message](#send-message)
+  - [Get Group ID](#get-group-id)
+- [🔧 API Parameters](#-api-parameters)
+- [📚 Documentation](#-documentation)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+
 ## GitAds Sponsored
 [![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=nestorzamili/whatsapp-web-js@github)](https://gitads.dev/v1/ad-track?source=nestorzamili/whatsapp-web-js@github)
 
@@ -177,7 +190,7 @@ curl -X POST http://localhost:3000/send-message \
   -H "x-api-key: your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
-    "id": ["6281234567890@c.us", "6281234567891@c.us", "120363185522082107@g.us"],
+    "id": ["6281234567890@c.us", "6281234567891@c.us", "1234567890123343445@g.us"],
     "message": "Hello everyone!"
   }'
 ```
