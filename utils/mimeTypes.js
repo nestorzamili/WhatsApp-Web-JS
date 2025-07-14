@@ -26,6 +26,10 @@ export const MIME_TYPES = {
 };
 
 export function getMimeType(filename, fallback = 'application/octet-stream') {
+  if (!filename || typeof filename !== 'string') {
+    return fallback;
+  }
+
   const extension = extname(filename).replace('.', '').toLowerCase();
   return MIME_TYPES[extension] || fallback;
 }
@@ -60,6 +64,10 @@ export function isDocument(filename) {
 }
 
 export function getFileCategory(filename) {
+  if (!filename || typeof filename !== 'string') {
+    return 'unsupported';
+  }
+
   if (isImage(filename)) return 'image';
   if (isVideo(filename)) return 'video';
   if (isAudio(filename)) return 'audio';
@@ -69,5 +77,9 @@ export function getFileCategory(filename) {
 }
 
 export function isWhatsAppSupported(filename) {
+  if (!filename || typeof filename !== 'string') {
+    return false;
+  }
+
   return getFileCategory(filename) !== 'unsupported';
 }

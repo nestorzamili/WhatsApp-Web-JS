@@ -1,28 +1,16 @@
 export const COMMANDS = {
+  // Example command to reply with a simple message
   ping: {
     type: 'simple',
     enabled: true,
     groupOnly: false,
     allowedGroups: [],
-    pattern: '!ping',
+    pattern: '!test',
     exact: true,
-    reply: 'pong',
+    reply: 'ok',
   },
 
-  schedule: {
-    type: 'script',
-    script: 'python3 get_schedule.py',
-    cwd: './scripts',
-    enabled: true,
-    groupOnly: false,
-    allowedGroups: [],
-    pattern: '!schedule',
-    exact: true,
-    successMessage: 'Schedule data sent to',
-    errorMessage: 'Error retrieving schedule data.',
-    noDataMessage: 'No schedule data available.',
-  },
-
+  // Example command to run a script without parameters
   report: {
     type: 'script',
     script: 'python3 generate_report.py',
@@ -37,6 +25,7 @@ export const COMMANDS = {
     noDataMessage: 'No report data available.',
   },
 
+  // Example command to run a script with parameters
   search: {
     type: 'script_with_param',
     script: 'node search_data.js',
@@ -53,6 +42,10 @@ export const COMMANDS = {
 };
 
 export function findCommand(messageBody) {
+  if (!messageBody || typeof messageBody !== 'string') {
+    return null;
+  }
+
   for (const [commandName, config] of Object.entries(COMMANDS)) {
     if (!config.enabled) continue;
 

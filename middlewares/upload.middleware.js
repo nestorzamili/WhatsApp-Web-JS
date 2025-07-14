@@ -9,7 +9,7 @@ const upload = multer({
     fileSize: 50 * 1024 * 1024,
     files: 10,
   },
-  fileFilter: (file, cb) => {
+  fileFilter: (req, file, cb) => {
     if (isWhatsAppSupported(file.originalname)) {
       cb(null, true);
     } else {

@@ -42,9 +42,91 @@ Or use OpenSSL:
 echo "whatsapp_$(openssl rand -hex 32)"
 ```
 
+## ➕ Adding a New Command
+
+To add a new command, edit the `utils/commands.js` file and add an entry to the `COMMANDS` object.
+
+### Command Structure
+```js
+command_name: {
+  type: 'simple' | 'script' | 'script_with_param',
+  enabled: true, // enable or disable the command
+  groupOnly: false, // true if only for groups
+  allowedGroups: [], // array of allowed group IDs (or empty for all)
+  pattern: '!commandname', // message prefix recognized as a command
+  exact: true/false, // true: must match exactly, false: can have parameters after pattern
+  reply: 'Reply text', // only for type: 'simple'
+  script: 'script command', // only for type: 'script' or 'script_with_param'
+  cwd: './scripts', // working directory for script (optional)
+  successMessage: 'Message if success',
+  errorMessage: 'Message if error',
+  noDataMessage: 'Message if no data',
+},
+```
+
+### Example: Simple Command
+```js
+hello: {
+  type: 'simple',
+  enabled: true,
+  groupOnly: false,
+  allowedGroups: [],
+  pattern: '!hello',
+  exact: true,
+  reply: 'Hello there!',
+},
+```
+
+### Example: Script Command with Parameter
+```js
+search: {
+  type: 'script_with_param',
+  script: 'node search_data.js',
+  cwd: './scripts',
+  enabled: true,
+  groupOnly: true,
+  allowedGroups: ['example_group_id@g.us'],
+  pattern: '!search:', // message must start with !search:
+  exact: false,
+  successMessage: 'Search results sent to',
+  errorMessage: 'Error executing search.',
+  noDataMessage: 'No search results found.',
+},
+```
+
+> **Tips:**
+> - For commands with parameters, use `exact: false` and set the pattern as needed (`!command` or `!command:`)
+
 ## 🌐 API Documentation
 
 All endpoints require the `x-api-key` header for authentication.
+
+### Response Format
+
+All API responses follow a consistent JSON format:
+
+**Success Response:**
+```json
+{
+  "status": "success",
+  "message": "Operation completed successfully",
+  "data": {
+    // Response data here
+  }
+}
+```
+
+**Error Response:**
+```json
+{
+  "status": "error",
+  "message": "Error description",
+  "error": {
+    "code": "ERROR_CODE",
+    "details": "Additional error details"
+  }
+}
+```
 
 ### Content Type Support
 

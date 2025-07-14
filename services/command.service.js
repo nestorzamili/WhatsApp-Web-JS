@@ -3,7 +3,7 @@ import { logWithDate } from '../utils/logger.js';
 import { findCommand } from '../utils/commands.js';
 
 async function handleCommand(message, commandName, command, parameter = null) {
-  const { from } = message;
+  const from = message.author || message.from;
 
   if (!command) {
     logWithDate(`Unknown command: ${commandName}`);
@@ -37,22 +37,30 @@ async function handleSimpleCommand(message, from, command) {
 
 async function handleScriptCommand(message, from, command, parameter) {
   if (command.groupOnly) {
-    const chat = await message.getChat();
+    try {
+      const chat = await message.getChat();
 
-    if (!chat.isGroup) {
-      logWithDate(
-        `${command.script} command attempted from private chat - ignored`,
-      );
-      return;
-    }
-
-    if (command.allowedGroups.length > 0) {
-      if (!command.allowedGroups.includes(chat.id._serialized)) {
+      if (!chat.isGroup) {
         logWithDate(
-          `${command.script} command attempted from unauthorized group: ${chat.name} (${chat.id._serialized})`,
+          `${command.script} command attempted from private chat - ignored`,
         );
         return;
       }
+
+      if (command.allowedGroups.length > 0) {
+        const chatId = chat.id?._serialized;
+        if (!chatId || !command.allowedGroups.includes(chatId)) {
+          logWithDate(
+            `${command.script} command attempted from unauthorized group: ${
+              chat.name || 'Unknown'
+            } (${chatId || 'Unknown ID'})`,
+          );
+          return;
+        }
+      }
+    } catch (error) {
+      logWithDate(`Error getting chat info for ${command.script}: ${error}`);
+      return;
     }
   }
 
@@ -93,8 +101,12 @@ async function handleScriptCommand(message, from, command, parameter) {
   });
 }
 
-async function handleMessage(message) {
+async function handleMessage(client, message) {
   const { body } = message;
+
+  if (!body || typeof body !== 'string') {
+    return;
+  }
 
   try {
     const commandMatch = findCommand(body);
