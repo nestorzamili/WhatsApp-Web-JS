@@ -3,16 +3,15 @@
   "version": "1.0.0",
   "description": "WhatsApp Bot",
   "main": "app.js",
+  "type": "module",
   "scripts": {
     "start": "node app.js"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.812.0",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "multer": "^2.0.1",
     "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "^1.28.0",
-    "wwebjs-aws-s3": "^1.0.2"
+    "whatsapp-web.js": "^1.31.0"
   }
 }

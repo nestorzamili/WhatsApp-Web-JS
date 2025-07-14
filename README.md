@@ -2,177 +2,318 @@
 
 # Simple WhatsApp Bot
 
-This is a WhatsApp bot built with Express.js that connects through the WhatsApp Web browser app and uses the [WhatsApp Web JS](https://wwebjs.dev/) client library for the WhatsApp Web API.
+Simple WhatsApp bot built with Express.js, featuring clean architecture and comprehensive API endpoints.
 
 ## GitAds Sponsored
 [![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=nestorzamili/whatsapp-web-js@github)](https://gitads.dev/v1/ad-track?source=nestorzamili/whatsapp-web-js@github)
 
-## Features
-
-- Send text messages to multiple individuals or groups simultaneously via API
-- Send file messages with or without captions to multiple individuals or groups via API
-- Send images as base64 to multiple individuals or groups via API
-- Check WhatsApp Group IDs
-- Test response with `!ping` command
-- Check logs with `!logs` command
-- Delete messages by message ID with `!deleteMessage,yourmessageid` command (You can check messageId in the logs)
-
-## Installation
+## 🚀 Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/nestorzamili/whatsapp-web.js.git
+   git clone https://github.com/nestorzamili/whatsapp-web-js.git
+   cd whatsapp-web-js
    ```
 
-2. Install the dependencies:
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-3. Create a `.env` file in the root directory with the following variables:
-   ```
+3. Create `.env` file:
+   ```env
    PORT=3000
    API_KEY=your_api_key_here
-   
-   # Only required for remote authentication (AWS S3)
-   AWS_REGION=your_aws_region
-   AWS_ACCESS_KEY_ID=your_aws_access_key
-   AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-   AWS_BUCKET_NAME=your_s3_bucket_name
-   AWS_REMOTE_DATA_PATH=your_remote_path
    ```
 
-4. Start the bot:
+4. Start the application:
    ```bash
    npm start
    ```
 
-The bot will display a QR code in the terminal. Scan this QR code with your phone to log in to WhatsApp Web and start using the bot.
+5. Scan the QR code with your WhatsApp to authenticate
 
-## Authentication Options
-
-The bot offers two authentication strategies:
-
-- **Local Authentication**: Uses `app.js` to store WhatsApp session data locally
-- **Remote Authentication**: Uses `remoteAuth.js` to store session data in AWS S3
-
-To use Remote Authentication with AWS S3, make sure you have properly configured the AWS environment variables in your `.env` file.
-
-## API Key Generation
-
-Generate your API key using Node.js in your terminal:
-
-```bash
-echo "samunu_$(openssl rand -hex 32)"
-```
-
-Copy the generated key to the `API_KEY` variable in your `.env` file.
-
-## API Usage
+## 🔐 Authentication
 
 All API endpoints require authentication via the `x-api-key` header.
 
+### Generate API Key
+```bash
+node -e "console.log('whatsapp_' + require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Or use OpenSSL:
+```bash
+echo "whatsapp_$(openssl rand -hex 32)"
+```
+
+## ➕ Adding a New Command
+
+To add a new command, edit the `utils/commands.js` file and add an entry to the `COMMANDS` object.
+
+### Command Structure
+```js
+command_name: {
+  type: 'simple' | 'script' | 'script_with_param',
+  enabled: true, // enable or disable the command
+  groupOnly: false, // true if only for groups
+  allowedGroups: [], // array of allowed group IDs (or empty for all)
+  pattern: '!commandname', // message prefix recognized as a command
+  exact: true/false, // true: must match exactly, false: can have parameters after pattern
+  reply: 'Reply text', // only for type: 'simple'
+  script: 'script command', // only for type: 'script' or 'script_with_param'
+  cwd: './scripts', // working directory for script (optional)
+  successMessage: 'Message if success',
+  errorMessage: 'Message if error',
+  noDataMessage: 'Message if no data',
+},
+```
+
+### Example: Simple Command
+```js
+hello: {
+  type: 'simple',
+  enabled: true,
+  groupOnly: false,
+  allowedGroups: [],
+  pattern: '!hello',
+  exact: true,
+  reply: 'Hello there!',
+},
+```
+
+### Example: Script Command with Parameter
+```js
+search: {
+  type: 'script_with_param',
+  script: 'node search_data.js',
+  cwd: './scripts',
+  enabled: true,
+  groupOnly: true,
+  allowedGroups: ['example_group_id@g.us'],
+  pattern: '!search:', // message must start with !search:
+  exact: false,
+  successMessage: 'Search results sent to',
+  errorMessage: 'Error executing search.',
+  noDataMessage: 'No search results found.',
+},
+```
+
+> **Tips:**
+> - For commands with parameters, use `exact: false` and set the pattern as needed (`!command` or `!command:`)
+
+## 🌐 API Documentation
+
+All endpoints require the `x-api-key` header for authentication.
+
+### Response Format
+
+All API responses follow a consistent JSON format:
+
+**Success Response:**
+```json
+{
+  "status": "success",
+  "message": "Operation completed successfully",
+  "data": {
+    // Response data here
+  }
+}
+```
+
+**Error Response:**
+```json
+{
+  "status": "error",
+  "message": "Error description",
+  "error": {
+    "code": "ERROR_CODE",
+    "details": "Additional error details"
+  }
+}
+```
+
+### Content Type Support
+
+The API supports two content types for flexible usage:
+
+1. **application/json** - For text messages and file paths only
+2. **multipart/form-data** - For file uploads with optional text and file paths
+
+### Health Check
+
+**Endpoint:** `GET /`
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Server is running healthy",
+  "data": {
+    "status": "healthy",
+    "uptime": "1h 0m 0s"
+  }
+}
+```
+
+### Send Message
+
+**Endpoint:** `POST /send-message`
+
+#### Send Text Message (JSON)
+```bash
+curl -X POST http://localhost:3000/send-message \
+  -H "x-api-key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": ["6281234567890@c.us"],
+    "message": "Hello World!"
+  }'
+```
+
+#### Send Text Message (Multiple Recipients)
+```bash
+curl -X POST http://localhost:3000/send-message \
+  -H "x-api-key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": ["6281234567890@c.us", "6281234567891@c.us", "120363185522082107@g.us"],
+    "message": "Hello everyone!"
+  }'
+```
+
+#### Send File from Path (JSON)
+```bash
+curl -X POST http://localhost:3000/send-message \
+  -H "x-api-key: your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": ["6281234567890@c.us"],
+    "message": "File from server",
+    "filePaths": ["/home/user/documents/file.pdf", "/path/to/image.jpg"]
+  }'
+```
+
+#### Send File Upload with Caption (Form-Data)
+```bash
+curl -X POST http://localhost:3000/send-message \
+  -H "x-api-key: your_api_key" \
+  -F "id[]=6281234567890@c.us" \
+  -F "message=Check this file" \
+  -F "files=@/path/to/your/file.jpg"
+```
+
+#### Send Mixed Files (Form-Data)
+```bash
+curl -X POST http://localhost:3000/send-message \
+  -H "x-api-key: your_api_key" \
+  -F "id[]=6281234567890@c.us" \
+  -F "id[]=6281234567891@c.us" \
+  -F "message=Multiple files example" \
+  -F "files=@/local/upload/file1.jpg" \
+  -F "filePaths[]=/server/path/file2.pdf" \
+  -F "filePaths[]=/server/path/file3.docx"
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Sent to all recipients",
+  "data": {
+    "total": 2,
+    "success": 2,
+    "failed": 0
+  }
+}
+```
+
+**Error Response (Partial Success):**
+```json
+{
+  "status": "success",
+  "message": "Sent to 1/2 recipients",
+  "data": {
+    "total": 2,
+    "success": 1,
+    "failed": 1,
+    "errors": [
+      {
+        "id": "invalid@c.us",
+        "error": "Chat not found"
+      }
+    ]
+  }
+}
+```
+
+#### Supported File Types (WhatsApp Compatible)
+- **Images**: jpg, jpeg, png, gif, webp
+- **Videos**: mp4, avi, mov, 3gp
+- **Audio**: mp3, wav, ogg, aac, m4a
+- **Documents**: pdf, doc, docx, xls, xlsx, ppt, pptx, txt
+
 ### Get Group ID
 
-```
-GET http://localhost:3000/get-group-id
-```
+**Endpoint:** `GET /get-group-id?groupName=YourGroupName`
 
-| Header | Type | Description |
-| :--- | :--- | :--- |
-| `x-api-key` | `string` | **Required**. Your API key |
-
-Request Body:
+**Response:**
 ```json
 {
-  "groupName": "Name of the group."
+  "status": "success",
+  "message": "Group found successfully", 
+  "data": {
+    "groupName": "YourGroupName",
+    "groupId": "120363185522082107@g.us"
+  }
 }
 ```
 
-### Send Text Message
+## 🔧 API Parameters
 
-```
-POST http://localhost:3000/send-plaintext
-```
+### Send Message Parameters
 
-| Header | Type | Description |
-| :--- | :--- | :--- |
-| `x-api-key` | `string` | **Required**. Your API key |
-| `Content-Type` | `application/json` | **Required**. |
+| Parameter | Type | Required | Description | Content-Type |
+|-----------|------|----------|-------------|--------------|
+| `id` | array | ✅ | Array of WhatsApp IDs | Both |
+| `message` | string | ✅ | Text message content | Both |
+| `filePaths` | array | ❌ | Array of server file paths | Both |
+| `files` | file(s) | ❌ | Upload file(s) via form-data | multipart only |
 
-Request Body:
-```json
-{
-  "message": "Your message here",
-  "id": "123456789@g.us,987654321@c.us"
-}
-```
+*At least one of: `message`, `files`, or `filePaths` is required.
 
-The `id` parameter can contain multiple IDs separated by commas without spaces.
+### Content Type Guidelines
 
-### Send File
+- **Use JSON** (`application/json`) for:
+  - Text-only messages
+  - Server-side file paths
+  - API integrations
+  - Lightweight requests
 
-```
-POST http://localhost:3000/send-file
-```
+- **Use Form-Data** (`multipart/form-data`) for:
+  - File uploads from client
+  - Mixed file sources (upload + paths)
+  - Web form submissions
 
-| Header | Type | Description |
-| :--- | :--- | :--- |
-| `x-api-key` | `string` | **Required**. Your API key |
 
-Form Data:
-- `id` (string): **Required**. Recipient ID(s), separate multiple with comma
-- `caption` (string): Optional caption text
-- `attachment` (file): **Required**. File to send
+## 📚 Documentation
 
-### Send Base64 Image
+- [WhatsApp Web JS Documentation](https://docs.wwebjs.dev/)
+- [Express.js Documentation](https://expressjs.com/)
 
-```
-POST http://localhost:3000/send-base64-image
-```
+## 🤝 Contributing
 
-| Header | Type | Description |
-| :--- | :--- | :--- |
-| `x-api-key` | `string` | **Required**. Your API key |
-| `Content-Type` | `application/json` | **Required**. |
+We welcome contributions! Please:
 
-Request Body:
-```json
-{
-  "id": "123456789@g.us",
-  "caption": "Optional image caption",
-  "images": [
-    {
-      "mimetype": "image/jpeg",
-      "data": "base64encodedstring...",
-      "filename": "image1.jpg"
-    },
-    {
-      "mimetype": "image/png",
-      "data": "base64encodedstring...",
-      "filename": "image2.png"
-    }
-  ]
-}
-```
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-## WhatsApp Commands
+## 📄 License
 
-The bot responds to the following commands in WhatsApp chats:
+This project is licensed under the Apache-2.0 License. See the `LICENSE` file for details.
 
-- `!ping`: Tests if the bot is active; it will respond with "pong"
-- `!logs`: Shows the last 10 lines from the log file
-- `!deleteMessage,messageID`: Deletes a message with the specified ID (only works for messages sent by the bot)
+---
 
-## Documentation
-
-For more details about the WhatsApp Web JS library, visit:
-https://docs.wwebjs.dev/
-
-## Contributing
-
-Contributions are always welcome! Please fork this repository and submit pull requests.
-
-## License
-
-This project is licensed under the Apache-2.0 License. See the `LICENSE` file for more details.
+**Built with ❤️ using modern JavaScript and clean architecture principles.**
