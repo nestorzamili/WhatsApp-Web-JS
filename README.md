@@ -1,6 +1,11 @@
+<!-- GitAds-Verify: 9WEWXRM3CHOGNTF3NUQUJ486O4J8DX91 -->
+
 # Simple WhatsApp Bot
 
 Simple WhatsApp bot built with Express.js, featuring clean architecture and comprehensive API endpoints.
+
+## GitAds Sponsored
+[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=nestorzamili/whatsapp-web-js@github)](https://gitads.dev/v1/ad-track?source=nestorzamili/whatsapp-web-js@github)
 
 ## 🚀 Installation
 
