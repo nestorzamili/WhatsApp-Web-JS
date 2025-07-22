@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/nestorzamili/WhatsApp-Web-JS/compare/v1.2.0...v1.2.1) (2025-07-22)
+
+
+### Bug Fixes
+
+* package.json & package-lock.json to reduce vulnerabilities ([9bc20b4](https://github.com/nestorzamili/WhatsApp-Web-JS/commit/9bc20b406f75961b497279fc5f6ac5511a583016))
+
 ## [1.2.0](https://github.com/nestorzamili/WhatsApp-Web-JS/compare/v1.1.0...v1.2.0) (2025-07-14)
 
 
