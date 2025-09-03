@@ -21,7 +21,7 @@ const client = new Client({
   takeoverTimeoutMs: 10,
   puppeteer: puppeteerConfig,
   authStrategy: new LocalAuth({
-    dataPath: './session',
+    dataPath: 'session',
   }),
 });
 
