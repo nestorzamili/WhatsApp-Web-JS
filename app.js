@@ -20,8 +20,9 @@ const client = new Client({
   takeoverOnConflict: true,
   takeoverTimeoutMs: 10,
   puppeteer: puppeteerConfig,
-  authStrategy: new LocalAuth(),
-  dataPath: 'session',
+  authStrategy: new LocalAuth({
+    dataPath: './session',
+  }),
 });
 
 const startServer = () => {
