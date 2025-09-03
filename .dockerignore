@@ -6,27 +6,39 @@ yarn-error.log*
 
 # Env / secrets
 .env
+.env.*
+!.env.example
 *.pem
 *.key
 *.crt
-session
 
-# Logs
+# Session & Logs (akan di-mount sebagai volume)
+session
 logs
 *.log
 
 # Git
 .git
 .gitignore
+README.md
+DOCKER.md
+CHANGELOG.md
+
+# Docker files
+docker-compose.yml
+Dockerfile
 
 # OS / editor
 .DS_Store
 .vscode
 .idea
 
-# Python cache (there are some python scripts in samunu)
+# Python cache (script Python ada di host)
 **/__pycache__
 *.pyc
+**/*.egg-info
+**/venv
+**/env
 
 # Misc
 Thumbs.db

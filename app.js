@@ -17,6 +17,8 @@ app.use(text());
 app.use(urlencoded({ extended: true }));
 
 const client = new Client({
+  takeoverOnConflict: true,
+  takeoverTimeoutMs: 10,
   puppeteer: puppeteerConfig,
   authStrategy: new LocalAuth(),
   dataPath: 'session',
