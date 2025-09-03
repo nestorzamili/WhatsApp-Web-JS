@@ -5,7 +5,7 @@ export function logWithDate(message) {
   let logMessage = `- ${date} - ${message}`;
 
   console.log(logMessage);
-  const dir = 'logs';
+  const dir = './logs';
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
