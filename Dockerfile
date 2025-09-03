@@ -1,5 +1,6 @@
 FROM node:20-slim AS deps
 WORKDIR /usr/src/app
+ARG GIT_TAG=latest
 ENV CI=true
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev && npm cache clean --force
@@ -24,3 +25,6 @@ EXPOSE 3113
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:'+(process.env.PORT||3113)+'/',r=>process.exit(r.statusCode<400?0:1)).on('error',()=>process.exit(1))"
 CMD ["node", "app.js"]
+
+ARG GIT_TAG=latest
+LABEL git.tag=${GIT_TAG}
