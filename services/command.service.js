@@ -72,6 +72,7 @@ function executeScript(command, parameter) {
     const child = spawn(executable, args, {
       cwd: command.cwd,
       stdio: ['pipe', 'pipe', 'pipe'],
+      shell: true,
     });
 
     let stdout = '';
