@@ -12,7 +12,7 @@ let watcher = null;
 
 function loadCommands() {
   try {
-    const commandsPath = path.join(__dirname, 'commands.json');
+    const commandsPath = path.join(__dirname, '..', 'command', 'commands.json');
     const commandsData = readFileSync(commandsPath, 'utf8');
     COMMANDS = JSON.parse(commandsData);
     logWithDate(
@@ -32,7 +32,7 @@ function setupFileWatcher() {
   if (isWatching) return;
 
   try {
-    const commandsPath = path.join(__dirname, 'commands.json');
+    const commandsPath = path.join(__dirname, '..', 'command', 'commands.json');
 
     watcher = watch(commandsPath, { persistent: false }, (eventType) => {
       if (eventType === 'change') {
