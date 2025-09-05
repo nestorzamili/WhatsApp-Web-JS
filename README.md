@@ -158,13 +158,67 @@ Commands that execute a script with user-provided parameters.
 | `enabled` | boolean | Enable/disable command | ✅ |
 | `groupOnly` | boolean | Restrict to group chats only | ✅ |
 | `allowedGroups` | array | Array of allowed group IDs (empty = all groups) | ✅ |
-| `pattern` | string | Command trigger pattern | ✅ |
-| `reply` | string | Response message (simple commands only) | For `simple` |
-| `script` | string | Script to execute (script commands only) | For `script` types |
-| `cwd` | string | Working directory for script execution | For `script` types |
-| `successMessage` | string | Message when script succeeds | For `script` types |
-| `errorMessage` | string | Message when script fails | For `script` types |
-| `noDataMessage` | string | Message when script returns no data | For `script` types |
+| `pattern` | string | Command pattern to match | ✅ |
+| `reply` | string | Reply message (for simple commands) | ❌ |
+| `script` | string | Script command to execute | ❌ |
+| `cwd` | string | Working directory for script execution | ❌ |
+| `successMessage` | string | Success message for script commands | ❌ |
+| `errorMessage` | string | Error message for script commands | ❌ |
+| `noDataMessage` | string | No data message for script commands | ❌ |
+
+### Group Control & Security
+
+Commands can be configured to work only in groups and restricted to specific groups:
+
+#### Configuration Examples:
+
+**Public Command (Works Everywhere):**
+```json
+{
+  "ping": {
+    "type": "simple",
+    "enabled": true,
+    "groupOnly": false,          // ← Works in private chats too
+    "allowedGroups": [],         // ← No restrictions
+    "pattern": "!ping",
+    "reply": "pong!"
+  }
+}
+```
+
+**Group-Only Command:**
+```json
+{
+  "admin": {
+    "type": "script",
+    "enabled": true,
+    "groupOnly": true,           // ← Groups only
+    "allowedGroups": [],         // ← All groups allowed
+    "pattern": "!admin",
+    "script": "python admin.py",
+    "cwd": "./scripts"
+  }
+}
+```
+
+**Restricted Command:**
+```json
+{
+  "secret": {
+    "type": "simple",
+    "enabled": true,
+    "groupOnly": true,           // ← Groups only
+    "allowedGroups": [           // ← Only these specific groups
+      "120363185522082107@g.us",
+      "120363185522082108@g.us"
+    ],
+    "pattern": "!secret",
+    "reply": "This is a secret command!"
+  }
+}
+```
+
+> **💡 Tip**: Use the [Get Group ID](#get-group-id) endpoint to find group IDs for `allowedGroups` configuration.
 
 ### Auto-Reload Feature
 
@@ -338,14 +392,32 @@ curl -X POST http://localhost:3000/send-message \
 
 **Endpoint:** `GET /get-group-id?groupName=YourGroupName`
 
-**Response:**
+**Example Request:**
+```bash
+curl -X GET "http://localhost:3000/get-group-id?groupName=My%20Family%20Group" \
+  -H "x-api-key: your_api_key"
+```
+
+**Success Response:**
 ```json
 {
   "status": "success",
   "message": "Group found successfully", 
   "data": {
-    "groupName": "YourGroupName",
+    "groupName": "My Family Group",
     "groupId": "120363185522082107@g.us"
+  }
+}
+```
+
+**Error Response (Group Not Found):**
+```json
+{
+  "status": "error",
+  "message": "Group not found",
+  "error": {
+    "code": "GROUP_NOT_FOUND",
+    "details": "No group found with name: My Family Group"
   }
 }
 ```
@@ -388,6 +460,9 @@ curl -X POST http://localhost:3000/send-message \
 - **File watcher optimization**: Event-driven file monitoring with debouncing
 - **Flexible API**: Support for both JSON and multipart form data
 - **Session persistence**: WhatsApp session data preserved across restarts
+- **Group access control**: Commands can be restricted to specific groups or group-only
+- **Enhanced logging**: Detailed logs with sender names and IDs for better monitoring
+- **Multiple command types**: Simple replies, script execution, and parameterized commands
 
 ## 🤝 Contributing
 
