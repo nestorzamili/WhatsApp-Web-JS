@@ -7,6 +7,7 @@ import { logWithDate } from './utils/logger.js';
 import puppeteerConfig from './utils/puppeteer.config.js';
 import routes from './routes/index.route.js';
 import handleMessage from './services/command.service.js';
+import { cleanup } from './utils/commands.js';
 
 const { Client, LocalAuth } = whatsappWeb;
 const { PORT = 3113 } = process.env;
@@ -56,3 +57,15 @@ client.on('message', async (message) => {
 
 routes(app, client);
 client.initialize();
+
+process.on('SIGINT', () => {
+  logWithDate('Received SIGINT, shutting down gracefully...');
+  cleanup();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  logWithDate('Received SIGTERM, shutting down gracefully...');
+  cleanup();
+  process.exit(0);
+});
