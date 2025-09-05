@@ -2,6 +2,22 @@ import { spawn } from 'child_process';
 import { logWithDate } from '../utils/logger.js';
 import { findCommand } from '../utils/commands.js';
 
+async function getContactName(message) {
+  try {
+    const contact = await message.getContact();
+    return contact.pushname || contact.name || contact.number || 'Unknown';
+  } catch (error) {
+    return 'Unknown';
+  }
+}
+
+function formatFromInfo(fromId, fromName) {
+  if (fromName && fromName !== 'Unknown') {
+    return `${fromName} (${fromId})`;
+  }
+  return fromId || 'Unknown';
+}
+
 async function isCommandAllowed(message, command) {
   if (!command.groupOnly) return true;
 
@@ -121,14 +137,20 @@ function executeScript(command, parameter) {
 }
 
 async function handleSimpleCommand(message, from, command) {
+  const isAllowed = await isCommandAllowed(message, command);
+  if (!isAllowed) return;
+
   if (!command.reply) {
     logWithDate(`Simple command ${command.pattern} has no reply configured`);
     return;
   }
 
+  const fromName = await getContactName(message);
+  const fromInfo = formatFromInfo(from, fromName);
+
   await message.reply(command.reply);
   logWithDate(
-    `${from}: ${command.pattern} executed - replied with: ${command.reply}`,
+    `${fromInfo}: ${command.pattern} executed - replied with: ${command.reply}`,
   );
 }
 
@@ -136,7 +158,10 @@ async function handleScriptCommand(message, from, command, parameter) {
   const isAllowed = await isCommandAllowed(message, command);
   if (!isAllowed) return;
 
-  const validatedParameter = validateParameter(command, parameter, from);
+  const fromName = await getContactName(message);
+  const fromInfo = formatFromInfo(from, fromName);
+
+  const validatedParameter = validateParameter(command, parameter, fromInfo);
   if (command.type === 'script_with_param' && validatedParameter === null) {
     return;
   }
@@ -153,11 +178,11 @@ async function handleScriptCommand(message, from, command, parameter) {
     await message.reply(result.output);
     const successMessage =
       command.successMessage || 'Command executed successfully for';
-    logWithDate(`${successMessage} ${from}`);
+    logWithDate(`${successMessage} ${fromInfo}`);
   } else {
     const noDataMessage = command.noDataMessage || 'No data available.';
     await message.reply(noDataMessage);
-    logWithDate(`No data from ${command.script} for ${from}`);
+    logWithDate(`No data from ${command.script} for ${fromInfo}`);
   }
 }
 
@@ -180,7 +205,11 @@ async function handleCommand(message, commandName, command, parameter = null) {
         logWithDate(`Unknown command type: ${command.type}`);
     }
   } catch (error) {
-    logWithDate(`Error in ${commandName} handler: ${error.message}`);
+    const fromName = await getContactName(message);
+    const fromInfo = formatFromInfo(from, fromName);
+    logWithDate(
+      `Error in ${commandName} handler from ${fromInfo}: ${error.message}`,
+    );
     await message.reply(`Error processing ${commandName} request.`);
   }
 }
