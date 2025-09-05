@@ -66,7 +66,7 @@ function executeScript(command, parameter) {
     logWithDate(
       `Executing ${command.script}${
         parameter ? ` with parameter: ${parameter}` : ''
-      }`,
+      } in directory: ${command.cwd}`,
     );
 
     const child = spawn(executable, args, {
@@ -110,6 +110,11 @@ function executeScript(command, parameter) {
 
     child.on('error', (error) => {
       logWithDate(`Error executing ${command.script}: ${error.message}`);
+      logWithDate(
+        `Command details - executable: ${executable}, args: [${args.join(
+          ', ',
+        )}], cwd: ${command.cwd}`,
+      );
       resolve({ success: false, output: '', error: error.message });
     });
   });
