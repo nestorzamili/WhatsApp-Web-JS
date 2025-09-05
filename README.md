@@ -8,6 +8,8 @@ Simple WhatsApp bot built with Express.js, featuring clean architecture and comp
 - [🚀 Installation](#-installation)
 - [🔐 Authentication](#-authentication)
 - [➕ Adding a New Command](#-adding-a-new-command)
+  - [Command Types & Pattern Matching](#command-types--pattern-matching)
+  - [Auto-Reload Feature](#auto-reload-feature)
 - [🌐 API Documentation](#-api-documentation)
   - [Health Check](#health-check)
   - [Send Message](#send-message)
@@ -62,58 +64,124 @@ echo "whatsapp_$(openssl rand -hex 32)"
 
 ## ➕ Adding a New Command
 
-To add a new command, edit the `utils/commands.js` file and add an entry to the `COMMANDS` object.
+To add a new command, edit the `utils/commands.json` file and add an entry to the JSON object. The system uses **automatic file watching**, so changes are applied immediately without restarting the bot.
 
 ### Command Structure
-```js
-command_name: {
-  type: 'simple' | 'script' | 'script_with_param',
-  enabled: true, // enable or disable the command
-  groupOnly: false, // true if only for groups
-  allowedGroups: [], // array of allowed group IDs (or empty for all)
-  pattern: '!commandname', // message prefix recognized as a command
-  exact: true/false, // true: must match exactly, false: can have parameters after pattern
-  reply: 'Reply text', // only for type: 'simple'
-  script: 'script command', // only for type: 'script' or 'script_with_param'
-  cwd: './scripts', // working directory for script (optional)
-  successMessage: 'Message if success',
-  errorMessage: 'Message if error',
-  noDataMessage: 'Message if no data',
-},
+```json
+{
+  "command_name": {
+    "type": "simple | script | script_with_param",
+    "enabled": true,
+    "groupOnly": false,
+    "allowedGroups": [],
+    "pattern": "!commandname",
+    "reply": "Reply text",
+    "script": "script command",
+    "cwd": "./scripts",
+    "successMessage": "Message if success",
+    "errorMessage": "Message if error",
+    "noDataMessage": "Message if no data"
+  }
+}
 ```
 
-### Example: Simple Command
-```js
-hello: {
-  type: 'simple',
-  enabled: true,
-  groupOnly: false,
-  allowedGroups: [],
-  pattern: '!hello',
-  exact: true,
-  reply: 'Hello there!',
-},
-```
+### Command Types & Pattern Matching
 
-### Example: Script Command with Parameter
-```js
-search: {
-  type: 'script_with_param',
-  script: 'node search_data.js',
-  cwd: './scripts',
-  enabled: true,
-  groupOnly: true,
-  allowedGroups: ['example_group_id@g.us'],
-  pattern: '!search:', // message must start with !search:
-  exact: false,
-  successMessage: 'Search results sent to',
-  errorMessage: 'Error executing search.',
-  noDataMessage: 'No search results found.',
-},
+#### 1. Simple Commands (Exact Match)
+Commands that reply with a fixed message.
+```json
+{
+  "hello": {
+    "type": "simple",
+    "enabled": true,
+    "groupOnly": false,
+    "allowedGroups": [],
+    "pattern": "!hello",
+    "reply": "Hello there!"
+  }
+}
 ```
+- **Pattern**: `"!hello"`
+- **Matches**: `"!hello"` ✅
+- **Doesn't match**: `"!hello world"` ❌, `"hello !hello"` ❌
+
+#### 2. Script Commands (Exact Match)
+Commands that execute a script without parameters.
+```json
+{
+  "report": {
+    "type": "script",
+    "script": "python3 generate_report.py",
+    "cwd": "./scripts",
+    "enabled": true,
+    "groupOnly": true,
+    "allowedGroups": ["example_group_id@g.us"],
+    "pattern": "!report",
+    "successMessage": "Report generated successfully",
+    "errorMessage": "Error generating report",
+    "noDataMessage": "No report data available"
+  }
+}
+```
+- **Pattern**: `"!report"`
+- **Matches**: `"!report"` ✅
+- **Doesn't match**: `"!report daily"` ❌
+
+#### 3. Script Commands with Parameters (Prefix Match)
+Commands that execute a script with user-provided parameters.
+```json
+{
+  "search": {
+    "type": "script_with_param",
+    "script": "node search_data.js",
+    "cwd": "./scripts",
+    "enabled": true,
+    "groupOnly": true,
+    "allowedGroups": ["example_group_id@g.us"],
+    "pattern": "!search:",
+    "successMessage": "Search completed",
+    "errorMessage": "Search failed",
+    "noDataMessage": "No results found"
+  }
+}
+```
+- **Pattern**: `"!search:"`
+- **Matches**: `"!search:hotel jakarta"` ✅ (parameter: "hotel jakarta")
+- **Matches**: `"!search:restaurant"` ✅ (parameter: "restaurant")
+- **Doesn't match**: `"!search"` ❌, `"search:hotel"` ❌
+
+### Configuration Properties
+
+| Property | Type | Description | Required |
+|----------|------|-------------|----------|
+| `type` | string | Command type: `simple`, `script`, `script_with_param` | ✅ |
+| `enabled` | boolean | Enable/disable command | ✅ |
+| `groupOnly` | boolean | Restrict to group chats only | ✅ |
+| `allowedGroups` | array | Array of allowed group IDs (empty = all groups) | ✅ |
+| `pattern` | string | Command trigger pattern | ✅ |
+| `reply` | string | Response message (simple commands only) | For `simple` |
+| `script` | string | Script to execute (script commands only) | For `script` types |
+| `cwd` | string | Working directory for script execution | For `script` types |
+| `successMessage` | string | Message when script succeeds | For `script` types |
+| `errorMessage` | string | Message when script fails | For `script` types |
+| `noDataMessage` | string | Message when script returns no data | For `script` types |
+
+### Auto-Reload Feature
+
+The system automatically detects changes to `commands.json` and reloads the configuration:
+- **Detection time**: ~100ms after file save
+- **No restart required**: Changes apply immediately
+- **Logging**: All reload events are logged with timestamps
+
+### File Location in Container
+
+- **Local path**: `utils/commands.json`
 
 > **Tips:**
-> - For commands with parameters, use `exact: false` and set the pattern as needed (`!command` or `!command:`)
+> - Use descriptive patterns to avoid conflicts
+> - For parameters, use separators like `:` or `=`
+> - Test patterns in order (first match wins)
+> - Commands are case-sensitive
 
 ## 🌐 API Documentation
 
@@ -313,6 +381,13 @@ curl -X POST http://localhost:3000/send-message \
 
 - [WhatsApp Web JS Documentation](https://docs.wwebjs.dev/)
 - [Express.js Documentation](https://expressjs.com/)
+
+### Key Features
+- **Auto-reload commands**: Changes to `commands.json` are detected automatically
+- **Clean architecture**: Separation of concerns with controllers, services, and utilities
+- **File watcher optimization**: Event-driven file monitoring with debouncing
+- **Flexible API**: Support for both JSON and multipart form data
+- **Session persistence**: WhatsApp session data preserved across restarts
 
 ## 🤝 Contributing
 
