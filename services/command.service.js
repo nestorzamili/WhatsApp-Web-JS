@@ -73,6 +73,7 @@ function executeScript(command, parameter) {
       cwd: command.cwd,
       stdio: ['pipe', 'pipe', 'pipe'],
       shell: true,
+      env: { ...process.env },
     });
 
     let stdout = '';
