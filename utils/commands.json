@@ -1,0 +1,34 @@
+{
+  "ping": {
+    "type": "simple",
+    "enabled": true,
+    "groupOnly": false,
+    "allowedGroups": [],
+    "pattern": "!test",
+    "reply": "ok"
+  },
+  "report": {
+    "type": "script",
+    "script": "python3 generate_report.py",
+    "cwd": "./scripts",
+    "enabled": true,
+    "groupOnly": true,
+    "allowedGroups": ["example_group_id@g.us"],
+    "pattern": "!report",
+    "successMessage": "Report data sent to",
+    "errorMessage": "Error generating report.",
+    "noDataMessage": "No report data available."
+  },
+  "search": {
+    "type": "script_with_param",
+    "script": "node search_data.js",
+    "cwd": "./scripts",
+    "enabled": true,
+    "groupOnly": true,
+    "allowedGroups": ["example_group_id@g.us"],
+    "pattern": "!search:",
+    "successMessage": "Search results sent to",
+    "errorMessage": "Error executing search.",
+    "noDataMessage": "No search results found."
+  }
+}

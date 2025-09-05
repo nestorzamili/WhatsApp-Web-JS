@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   whatsapp-bot:
     image: ghcr.io/nestorzamili/whatsapp-web-js:latest
@@ -10,6 +8,7 @@ services:
     - /home/ubuntu/nestor/script:/usr/src/app/script
     - /home/ubuntu/nestor/session:/usr/src/app/session                  
     - /home/ubuntu/nestor/logs:/usr/src/app/logs
+    - /home/ubuntu/nestor/commands.json:/usr/src/app/utils/commands.json
     environment:
       - NODE_ENV=production
       - TZ=Asia/Jakarta

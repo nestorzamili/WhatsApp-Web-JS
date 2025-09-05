@@ -1,45 +1,78 @@
-export const COMMANDS = {
-  // Example command to reply with a simple message
-  ping: {
-    type: 'simple',
-    enabled: true,
-    groupOnly: false,
-    allowedGroups: [],
-    pattern: '!test',
-    exact: true,
-    reply: 'ok',
-  },
+import { readFileSync, watch } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { logWithDate } from './logger.js';
 
-  // Example command to run a script without parameters
-  report: {
-    type: 'script',
-    script: 'python3 generate_report.py',
-    cwd: './scripts',
-    enabled: true,
-    groupOnly: true,
-    allowedGroups: ['example_group_id@g.us'],
-    pattern: '!report',
-    exact: true,
-    successMessage: 'Report data sent to',
-    errorMessage: 'Error generating report.',
-    noDataMessage: 'No report data available.',
-  },
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  // Example command to run a script with parameters
-  search: {
-    type: 'script_with_param',
-    script: 'node search_data.js',
-    cwd: './scripts',
-    enabled: true,
-    groupOnly: true,
-    allowedGroups: ['example_group_id@g.us'],
-    pattern: '!search:',
-    exact: false,
-    successMessage: 'Search results sent to',
-    errorMessage: 'Error executing search.',
-    noDataMessage: 'No search results found.',
-  },
-};
+let COMMANDS = {};
+let isWatching = false;
+let watcher = null;
+
+function loadCommands() {
+  try {
+    const commandsPath = path.join(__dirname, 'commands.json');
+    const commandsData = readFileSync(commandsPath, 'utf8');
+    COMMANDS = JSON.parse(commandsData);
+    logWithDate(
+      `Commands loaded successfully. Found ${
+        Object.keys(COMMANDS).length
+      } commands.`,
+    );
+    return true;
+  } catch (error) {
+    logWithDate(`Error loading commands.json: ${error.message}`);
+    COMMANDS = {};
+    return false;
+  }
+}
+
+function setupFileWatcher() {
+  if (isWatching) return;
+
+  try {
+    const commandsPath = path.join(__dirname, 'commands.json');
+
+    watcher = watch(commandsPath, { persistent: false }, (eventType) => {
+      if (eventType === 'change') {
+        clearTimeout(watcher.reloadTimeout);
+        watcher.reloadTimeout = setTimeout(() => {
+          logWithDate('commands.json file changed, reloading...');
+          const success = loadCommands();
+          if (success) {
+            logWithDate('Commands reloaded automatically due to file change.');
+          }
+        }, 100);
+      }
+    });
+
+    watcher.on('error', (error) => {
+      logWithDate(`File watcher error: ${error.message}`);
+      isWatching = false;
+    });
+
+    isWatching = true;
+    logWithDate('File watcher setup for commands.json');
+  } catch (error) {
+    logWithDate(`Error setting up file watcher: ${error.message}`);
+  }
+}
+
+loadCommands();
+setupFileWatcher();
+
+export { COMMANDS };
+
+export function cleanup() {
+  if (watcher) {
+    watcher.close();
+    if (watcher.reloadTimeout) {
+      clearTimeout(watcher.reloadTimeout);
+    }
+    logWithDate('File watcher cleanup completed');
+  }
+}
 
 export function findCommand(messageBody) {
   if (!messageBody || typeof messageBody !== 'string') {
@@ -49,11 +82,13 @@ export function findCommand(messageBody) {
   for (const [commandName, config] of Object.entries(COMMANDS)) {
     if (!config.enabled) continue;
 
-    if (config.exact) {
+    if (config.type === 'simple' || config.type === 'script') {
       if (messageBody === config.pattern) {
         return { commandName, config, parameter: null };
       }
-    } else {
+    }
+
+    if (config.type === 'script_with_param') {
       if (messageBody.startsWith(config.pattern)) {
         const parameter = messageBody.substring(config.pattern.length).trim();
         return { commandName, config, parameter };
