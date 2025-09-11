@@ -82,16 +82,16 @@ export function findCommand(messageBody) {
   for (const [commandName, config] of Object.entries(COMMANDS)) {
     if (!config.enabled) continue;
 
-    if (config.type === 'simple' || config.type === 'script') {
+    if (config.type === 'simple' || config.type === 'command_list') {
       if (messageBody === config.pattern) {
         return { commandName, config, parameter: null };
       }
     }
 
-    if (config.type === 'script_with_param') {
+    if (config.type === 'script') {
       if (messageBody.startsWith(config.pattern)) {
         const parameter = messageBody.substring(config.pattern.length).trim();
-        return { commandName, config, parameter };
+        return { commandName, config, parameter: parameter || null };
       }
     }
   }

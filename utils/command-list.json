@@ -8,12 +8,19 @@
     "reply": "ok"
   },
   "getSchedule": {
-    "type": "script_with_param",
+    "type": "script",
     "script": "python3 getSchedule.py",
     "cwd": "./script",
     "enabled": true,
     "groupOnly": false,
     "allowedGroups": [],
     "pattern": "!jadwal:"
+  },
+  "commandList": {
+    "type": "command_list",
+    "enabled": true,
+    "groupOnly": false,
+    "allowedGroups": [],
+    "pattern": "!command-list"
   }
 }

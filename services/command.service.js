@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
 import { logWithDate } from '../utils/logger.js';
-import { findCommand } from '../utils/commands.js';
+import { findCommand, COMMANDS } from '../utils/commands.js';
 
 async function getContactName(message) {
   try {
@@ -56,17 +56,6 @@ async function isCommandAllowed(message, command) {
     );
     return false;
   }
-}
-
-function validateParameter(command, parameter, from) {
-  if (command.type !== 'script_with_param') return parameter;
-
-  if (!parameter || parameter.trim() === '') {
-    logWithDate(`Missing parameter for ${command.script} from ${from}`);
-    return null;
-  }
-
-  return parameter.trim();
 }
 
 function executeScript(command, parameter) {
@@ -161,12 +150,7 @@ async function handleScriptCommand(message, from, command, parameter) {
   const fromName = await getContactName(message);
   const fromInfo = formatFromInfo(from, fromName);
 
-  const validatedParameter = validateParameter(command, parameter, fromInfo);
-  if (command.type === 'script_with_param' && validatedParameter === null) {
-    return;
-  }
-
-  const result = await executeScript(command, validatedParameter);
+  const result = await executeScript(command, parameter);
 
   if (result.success && result.output) {
     await message.reply(result.output);
@@ -193,8 +177,16 @@ async function handleCommand(message, commandName, command, parameter = null) {
       case 'simple':
         return await handleSimpleCommand(message, from, command);
       case 'script':
-      case 'script_with_param':
         return await handleScriptCommand(message, from, command, parameter);
+      case 'command_list':
+        await message.reply(generateCommandList());
+        logWithDate(
+          `Command list requested by ${formatFromInfo(
+            from,
+            await getContactName(message),
+          )}`,
+        );
+        return;
       default:
         logWithDate(`Unknown command type: ${command.type}`);
     }
@@ -224,8 +216,25 @@ async function handleMessage(client, message) {
     }
   } catch (error) {
     logWithDate(`Error handling message: ${error.message}`);
-    console.error('Error handling message:', error);
   }
+}
+
+function generateCommandList() {
+  const enabledCommands = Object.entries(COMMANDS)
+    .filter(([_, config]) => config.enabled)
+    .map(([name, config]) => {
+      let description = config.pattern;
+      if (config.type === 'script' && config.pattern.endsWith(':')) {
+        description += ' <parameter>';
+      }
+      return `• ${description}`;
+    });
+
+  if (enabledCommands.length === 0) {
+    return 'No commands available.';
+  }
+
+  return `Available commands:\n${enabledCommands.join('\n')}`;
 }
 
 export default handleMessage;
