@@ -64,97 +64,66 @@ echo "whatsapp_$(openssl rand -hex 32)"
 
 ## ➕ Adding a New Command
 
-To add a new command, edit the `utils/commands.json` file and add an entry to the JSON object. The system uses **automatic file watching**, so changes are applied immediately without restarting the bot.
+To add a new command, edit the `utils/command-list.json` file. The system uses **automatic file watching**, so changes are applied immediately without restarting the bot.
 
-### Command Structure
+### Command Types
+
+#### 1. Simple Commands
+Reply with a fixed message.
 ```json
 {
-  "command_name": {
-    "type": "simple | script | script_with_param",
-    "enabled": true,
-    "groupOnly": false,
-    "allowedGroups": [],
-    "pattern": "!commandname",
-    "reply": "Reply text",
-    "script": "script command",
-    "cwd": "./scripts",
-    "successMessage": "Message if success",
-    "errorMessage": "Message if error",
-    "noDataMessage": "Message if no data"
-  }
-}
-```
-
-### Command Types & Pattern Matching
-
-#### 1. Simple Commands (Exact Match)
-Commands that reply with a fixed message.
-```json
-{
-  "hello": {
+  "ping": {
     "type": "simple",
     "enabled": true,
     "groupOnly": false,
     "allowedGroups": [],
-    "pattern": "!hello",
-    "reply": "Hello there!"
+    "pattern": "!test",
+    "reply": "ok"
   }
 }
 ```
-- **Pattern**: `"!hello"`
-- **Matches**: `"!hello"` ✅
-- **Doesn't match**: `"!hello world"` ❌, `"hello !hello"` ❌
 
-#### 2. Script Commands (Exact Match)
-Commands that execute a script without parameters.
+#### 2. Script Commands
+Execute a script with optional parameters.
 ```json
 {
-  "report": {
+  "getSchedule": {
     "type": "script",
-    "script": "python3 generate_report.py",
-    "cwd": "./scripts",
+    "script": "python3 getSchedule.py",
+    "cwd": "./script",
     "enabled": true,
-    "groupOnly": true,
-    "allowedGroups": ["example_group_id@g.us"],
-    "pattern": "!report",
-    "successMessage": "Report generated successfully",
-    "errorMessage": "Error generating report",
-    "noDataMessage": "No report data available"
+    "groupOnly": false,
+    "allowedGroups": [],
+    "pattern": "!jadwal:"
   }
 }
 ```
-- **Pattern**: `"!report"`
-- **Matches**: `"!report"` ✅
-- **Doesn't match**: `"!report daily"` ❌
 
-#### 3. Script Commands with Parameters (Prefix Match)
-Commands that execute a script with user-provided parameters.
+#### 3. Command List
+Built-in command to show available commands.
 ```json
 {
-  "search": {
-    "type": "script_with_param",
-    "script": "node search_data.js",
-    "cwd": "./scripts",
+  "commandList": {
+    "type": "command_list",
     "enabled": true,
-    "groupOnly": true,
-    "allowedGroups": ["example_group_id@g.us"],
-    "pattern": "!search:",
-    "successMessage": "Search completed",
-    "errorMessage": "Search failed",
-    "noDataMessage": "No results found"
+    "groupOnly": false,
+    "allowedGroups": [],
+    "pattern": "!command-list"
   }
 }
 ```
-- **Pattern**: `"!search:"`
-- **Matches**: `"!search:hotel jakarta"` ✅ (parameter: "hotel jakarta")
-- **Matches**: `"!search:restaurant"` ✅ (parameter: "restaurant")
-- **Doesn't match**: `"!search"` ❌, `"search:hotel"` ❌
+
+### Pattern Matching
+
+- **Exact match**: `"!test"` matches only `"!test"`
+- **Prefix match**: `"!jadwal:"` matches `"!jadwal:parameter"`
+- Scripts handle their own parameter validation
 
 ### Configuration Properties
 
 | Property | Type | Description | Required |
 |----------|------|-------------|----------|
-| `type` | string | Command type: `simple`, `script`, `script_with_param` | ✅ |
+| `type` | string | `simple`, `script`, or `command_list` | ✅ |
 | `enabled` | boolean | Enable/disable command | ✅ |
 | `groupOnly` | boolean | Restrict to group chats only | ✅ |
 | `allowedGroups` | array | Array of allowed group IDs (empty = all groups) | ✅ |
@@ -162,9 +131,6 @@ Commands that execute a script with user-provided parameters.
 | `reply` | string | Reply message (for simple commands) | ❌ |
 | `script` | string | Script command to execute | ❌ |
 | `cwd` | string | Working directory for script execution | ❌ |
-| `successMessage` | string | Success message for script commands | ❌ |
-| `errorMessage` | string | Error message for script commands | ❌ |
-| `noDataMessage` | string | No data message for script commands | ❌ |
 
 ### Group Control & Security
 
@@ -222,20 +188,24 @@ Commands can be configured to work only in groups and restricted to specific gro
 
 ### Auto-Reload Feature
 
-The system automatically detects changes to `commands.json` and reloads the configuration:
+The system automatically detects changes to `command-list.json` and reloads the configuration:
 - **Detection time**: ~100ms after file save
 - **No restart required**: Changes apply immediately
 - **Logging**: All reload events are logged with timestamps
 
-### File Location in Container
+### Available Commands
 
-- **Local path**: `utils/commands.json`
+Users can type `!command-list` to see all available commands in their chat.
 
-> **Tips:**
-> - Use descriptive patterns to avoid conflicts
-> - For parameters, use separators like `:` or `=`
-> - Test patterns in order (first match wins)
-> - Commands are case-sensitive
+**Example output:**
+```
+Available commands:
+• !test
+• !jadwal: <parameter>
+• !command-list
+```
+
+> **💡 Tip**: Use the [Get Group ID](#get-group-id) endpoint to find group IDs for `allowedGroups` configuration.
 
 ## 🌐 API Documentation
 
@@ -455,14 +425,14 @@ curl -X GET "http://localhost:3000/get-group-id?groupName=My%20Family%20Group" \
 - [Express.js Documentation](https://expressjs.com/)
 
 ### Key Features
-- **Auto-reload commands**: Changes to `commands.json` are detected automatically
+- **Auto-reload commands**: Changes to `command-list.json` are detected automatically
 - **Clean architecture**: Separation of concerns with controllers, services, and utilities
 - **File watcher optimization**: Event-driven file monitoring with debouncing
 - **Flexible API**: Support for both JSON and multipart form data
 - **Session persistence**: WhatsApp session data preserved across restarts
 - **Group access control**: Commands can be restricted to specific groups or group-only
 - **Enhanced logging**: Detailed logs with sender names and IDs for better monitoring
-- **Multiple command types**: Simple replies, script execution, and parameterized commands
+- **Three command types**: Simple replies, script execution, and built-in command list
 
 ## 🤝 Contributing
 
