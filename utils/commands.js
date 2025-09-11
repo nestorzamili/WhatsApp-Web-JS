@@ -12,7 +12,7 @@ let watcher = null;
 
 function loadCommands() {
   try {
-    const commandsPath = path.join(__dirname, '..', 'command', 'commands.json');
+    const commandsPath = path.join(__dirname, 'command-list.json');
     const commandsData = readFileSync(commandsPath, 'utf8');
     COMMANDS = JSON.parse(commandsData);
     logWithDate(
@@ -22,7 +22,7 @@ function loadCommands() {
     );
     return true;
   } catch (error) {
-    logWithDate(`Error loading commands.json: ${error.message}`);
+    logWithDate(`Error loading command-list.json: ${error.message}`);
     COMMANDS = {};
     return false;
   }
@@ -32,13 +32,13 @@ function setupFileWatcher() {
   if (isWatching) return;
 
   try {
-    const commandsPath = path.join(__dirname, '..', 'command', 'commands.json');
+    const commandsPath = path.join(__dirname, 'command-list.json');
 
     watcher = watch(commandsPath, { persistent: false }, (eventType) => {
       if (eventType === 'change') {
         clearTimeout(watcher.reloadTimeout);
         watcher.reloadTimeout = setTimeout(() => {
-          logWithDate('commands.json file changed, reloading...');
+          logWithDate('command-list.json file changed, reloading...');
           const success = loadCommands();
           if (success) {
             logWithDate('Commands reloaded automatically due to file change.');
@@ -53,7 +53,7 @@ function setupFileWatcher() {
     });
 
     isWatching = true;
-    logWithDate('File watcher setup for commands.json');
+    logWithDate('File watcher setup for command-list.json');
   } catch (error) {
     logWithDate(`Error setting up file watcher: ${error.message}`);
   }
