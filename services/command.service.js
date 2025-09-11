@@ -168,21 +168,15 @@ async function handleScriptCommand(message, from, command, parameter) {
 
   const result = await executeScript(command, validatedParameter);
 
-  if (!result.success) {
-    const errorMessage = command.errorMessage || 'Error executing command.';
-    await message.reply(errorMessage);
-    return;
-  }
-
-  if (result.output) {
+  if (result.success && result.output) {
     await message.reply(result.output);
-    const successMessage =
-      command.successMessage || 'Command executed successfully for';
-    logWithDate(`${successMessage} ${fromInfo}`);
+    logWithDate(`${command.script} executed successfully for ${fromInfo}`);
+  } else if (!result.success) {
+    logWithDate(`${command.script} failed for ${fromInfo}: ${result.error}`);
   } else {
-    const noDataMessage = command.noDataMessage || 'No data available.';
-    await message.reply(noDataMessage);
-    logWithDate(`No data from ${command.script} for ${fromInfo}`);
+    logWithDate(
+      `${command.script} executed but returned no output for ${fromInfo}`,
+    );
   }
 }
 

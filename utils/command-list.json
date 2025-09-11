@@ -7,52 +7,13 @@
     "pattern": "!test",
     "reply": "ok"
   },
-  "report": {
-    "type": "script",
-    "script": "python generate_report.py",
-    "cwd": "./scripts",
-    "enabled": true,
-    "groupOnly": true,
-    "allowedGroups": ["example_group_id@g.us"],
-    "pattern": "!report",
-    "successMessage": "Report data sent to",
-    "errorMessage": "Error generating report.",
-    "noDataMessage": "No report data available."
-  },
-  "search": {
-    "type": "script_with_param",
-    "script": "node search_data.js",
-    "cwd": "./scripts",
-    "enabled": true,
-    "groupOnly": true,
-    "allowedGroups": ["example_group_id@g.us"],
-    "pattern": "!search:",
-    "successMessage": "Search results sent to",
-    "errorMessage": "Error executing search.",
-    "noDataMessage": "No search results found."
-  },
   "getSchedule": {
-    "type": "script",
-    "script": "python getSchedule.py",
-    "cwd": "./samunu",
+    "type": "script_with_param",
+    "script": "python3 getSchedule.py",
+    "cwd": "./script",
     "enabled": true,
     "groupOnly": false,
     "allowedGroups": [],
-    "pattern": "!jadwal",
-    "successMessage": "Schedule data sent to",
-    "errorMessage": "Error getting schedule.",
-    "noDataMessage": "No schedule available."
-  },
-  "getVillage": {
-    "type": "script",
-    "script": "python get-village-brilliant.py",
-    "cwd": "./samunu",
-    "enabled": true,
-    "groupOnly": false,
-    "allowedGroups": [],
-    "pattern": "!desa",
-    "successMessage": "Village data sent to",
-    "errorMessage": "Error getting village data.",
-    "noDataMessage": "No village data available."
+    "pattern": "!jadwal:"
   }
 }
