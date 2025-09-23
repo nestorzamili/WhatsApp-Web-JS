@@ -23,9 +23,7 @@ async function sendMessage(client, id, options = {}) {
 
     if (message) {
       const sentMessage = await client.sendMessage(id, message);
-      logWithDate(
-        `Text message sent to ${chatName} with ID: ${sentMessage.id._serialized}`,
-      );
+      logWithDate(`Text message sent to ${chatName}`);
       return sentMessage;
     }
 
@@ -43,9 +41,7 @@ async function sendFilesByPath(client, id, filePaths, message, chatName) {
     const sentMessage = await client.sendMessage(id, media, {
       caption: message,
     });
-    logWithDate(
-      `File "${filePath}" sent to ${chatName} with ID: ${sentMessage.id._serialized}`,
-    );
+    logWithDate(`File "${filePath}" sent to ${chatName}`);
     results.push(sentMessage);
   }
   return results;
@@ -58,9 +54,7 @@ async function sendFilesByUpload(client, id, files, message, chatName) {
     const sentMessage = await client.sendMessage(id, media, {
       caption: message,
     });
-    logWithDate(
-      `File "${file.originalname}" sent to ${chatName} with ID: ${sentMessage.id._serialized}`,
-    );
+    logWithDate(`File "${file.originalname}" sent to ${chatName}`);
     results.push(sentMessage);
   }
   return results;
