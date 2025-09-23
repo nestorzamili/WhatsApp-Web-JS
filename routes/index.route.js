@@ -6,7 +6,7 @@ import {
   healthCheckController,
 } from '../controllers/message.controller.js';
 
-export default function (app, client) {
+const registerRoutes = (app, client) => {
   app.get('/', healthCheckController);
 
   app.post('/send-message', verifyKey, conditionalUpload, (req, res) =>
@@ -16,4 +16,6 @@ export default function (app, client) {
   app.get('/get-group-id', verifyKey, (req, res) =>
     getGroupIdController(req, res, client),
   );
-}
+};
+
+export default registerRoutes;

@@ -1,5 +1,5 @@
-import { readFileSync, existsSync } from 'fs';
-import { basename } from 'path';
+import { readFileSync, existsSync } from 'node:fs';
+import { basename } from 'node:path';
 import whatsappWeb from 'whatsapp-web.js';
 import { logWithDate } from '../utils/logger.js';
 import { getMimeType, isWhatsAppSupported } from '../utils/mimeTypes.js';
@@ -90,9 +90,10 @@ function createMedia(filename, base64Data, fallbackMimeType = null) {
     throw new Error(`Unsupported file type: ${filename}`);
   }
 
-  const mimetype = fallbackMimeType === null
-    ? getMimeType(filename)
-    : getMimeType(filename, fallbackMimeType);
+  const mimetype =
+    fallbackMimeType === null
+      ? getMimeType(filename)
+      : getMimeType(filename, fallbackMimeType);
   return new MessageMedia(mimetype, base64Data, filename);
 }
 

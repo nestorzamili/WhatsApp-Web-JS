@@ -1,4 +1,4 @@
-import { extname } from 'path';
+import { extname } from 'node:path';
 
 export const MIME_TYPES = {
   jpg: 'image/jpeg',
