@@ -14,7 +14,14 @@ function loadCommands() {
   try {
     const commandsPath = path.join(__dirname, 'command-list.json');
     const commandsData = readFileSync(commandsPath, 'utf8');
-    COMMANDS = JSON.parse(commandsData);
+    const newCommands = JSON.parse(commandsData);
+
+    for (const key in COMMANDS) {
+      delete COMMANDS[key];
+    }
+
+    Object.assign(COMMANDS, newCommands);
+
     logWithDate(
       `Commands loaded successfully. Found ${
         Object.keys(COMMANDS).length
@@ -23,7 +30,9 @@ function loadCommands() {
     return true;
   } catch (error) {
     logWithDate(`Error loading command-list.json: ${error.message}`);
-    COMMANDS = {};
+    for (const key in COMMANDS) {
+      delete COMMANDS[key];
+    }
     return false;
   }
 }
