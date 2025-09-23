@@ -1,12 +1,12 @@
-import { readFileSync, watch } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync, watch } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { logWithDate } from './logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let COMMANDS = {};
+const COMMANDS = {};
 let isWatching = false;
 let watcher = null;
 

@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { spawn } from 'node:child_process';
 import { logWithDate } from '../utils/logger.js';
 import { findCommand, COMMANDS } from '../utils/commands.js';
 
@@ -7,6 +7,7 @@ async function getContactName(message) {
     const contact = await message.getContact();
     return contact.pushname || contact.name || contact.number || 'Unknown';
   } catch (error) {
+    logWithDate(`Error getting contact name: ${error.message}`);
     return 'Unknown';
   }
 }
@@ -62,7 +63,7 @@ function executeScript(command, parameter) {
   return new Promise((resolve) => {
     const scriptParts = command.script.split(' ');
     const executable = scriptParts[0];
-    const args = [...scriptParts.slice(1)];
+    const args = scriptParts.slice(1);
 
     if (parameter) {
       args.push(parameter);
@@ -152,11 +153,11 @@ async function handleScriptCommand(message, from, command, parameter) {
 
   const result = await executeScript(command, parameter);
 
-  if (result.success && result.output) {
+  if (!result.success) {
+    logWithDate(`${command.script} failed for ${fromInfo}: ${result.error}`);
+  } else if (result.output) {
     await message.reply(result.output);
     logWithDate(`${command.script} executed successfully for ${fromInfo}`);
-  } else if (!result.success) {
-    logWithDate(`${command.script} failed for ${fromInfo}: ${result.error}`);
   } else {
     logWithDate(
       `${command.script} executed but returned no output for ${fromInfo}`,
@@ -224,8 +225,8 @@ function generateCommandList() {
     .filter(([_, config]) => config.enabled)
     .map(([name, config]) => {
       let description = config.pattern;
-      if (config.type === 'script' && config.pattern.endsWith(':')) {
-        description += ' <parameter>';
+      if (config.param_placeholder) {
+        description += ` ${config.param_placeholder}`;
       }
       return `• ${description}`;
     });
