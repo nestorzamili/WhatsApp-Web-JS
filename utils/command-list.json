@@ -1,26 +1,14 @@
 {
-  "ping": {
-    "type": "simple",
-    "enabled": true,
-    "groupOnly": false,
-    "allowedGroups": [],
-    "pattern": "!test",
-    "reply": "ok"
-  },
-  "getSchedule": {
-    "type": "script",
-    "script": "python3 getSchedule.py",
-    "cwd": "./script",
-    "enabled": true,
-    "groupOnly": false,
-    "allowedGroups": [],
-    "pattern": "!jadwal:"
-  },
-  "commandList": {
-    "type": "command_list",
-    "enabled": true,
-    "groupOnly": false,
-    "allowedGroups": [],
-    "pattern": "!command-list"
+  "_comment": "Command List Configuration - Field Documentation",
+  "_fields": {
+    "type": "REQUIRED - 'simple', 'script', or 'command_list' (example: 'simple')",
+    "enabled": "REQUIRED - true or false (example: true)",
+    "pattern": "REQUIRED - command trigger pattern (example: '!ping', '!script:')",
+    "access": "OPTIONAL - 'personal', 'group', or 'both' (default: 'both', example: 'group')",
+    "reply": "OPTIONAL - response text for simple commands (example: 'Hello World!')",
+    "script": "OPTIONAL - script command to execute (required for script type, example: 'python3 script.py')",
+    "cwd": "OPTIONAL - working directory for script (default: current directory, example: './scripts')",
+    "allowedGroups": "OPTIONAL - array of group IDs for restricted access (example: ['120363123456789012@g.us'])",
+    "param_placeholder": "OPTIONAL - parameter description for help text (example: '<parameter>')"
   }
 }

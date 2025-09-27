@@ -10,9 +10,22 @@ import handleMessage from './services/command.service.js';
 import { cleanup } from './utils/commands.js';
 
 const { Client, LocalAuth } = whatsappWeb;
-const { PORT = 3113 } = process.env;
+const { PORT = 3113, API_KEY } = process.env;
+
+if (!API_KEY) {
+  console.error('ERROR: API_KEY environment variable is required');
+  process.exit(1);
+}
 
 const app = express();
+
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
 app.use(json({ limit: '50mb' }));
 app.use(text());
 app.use(urlencoded({ extended: true }));
@@ -35,9 +48,10 @@ const startServer = () => {
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`Port ${PORT} is already in use, trying another port...`);
+      logWithDate(`Port ${PORT} is already in use, trying another port...`);
       server.listen(0);
     } else {
+      logWithDate(`Server error: ${err.message}`);
       throw err;
     }
   });
@@ -52,7 +66,7 @@ client.on('disconnected', () => logWithDate('Client disconnected!'));
 client.on('authenticated', () => logWithDate('Client authenticated!'));
 client.on('ready', startServer);
 client.on('message', async (message) => {
-  await handleMessage(client, message);
+  await handleMessage(message);
 });
 
 routes(app, client);
@@ -68,4 +82,17 @@ process.on('SIGTERM', () => {
   logWithDate('Received SIGTERM, shutting down gracefully...');
   cleanup();
   process.exit(0);
+});
+
+process.on('uncaughtException', (error) => {
+  logWithDate(`Uncaught Exception: ${error.message}`);
+  logWithDate(`Stack: ${error.stack}`);
+  cleanup();
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logWithDate(`Unhandled Rejection at: ${promise}, reason: ${reason}`);
+  cleanup();
+  process.exit(1);
 });

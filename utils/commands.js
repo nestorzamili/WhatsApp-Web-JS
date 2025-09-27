@@ -10,11 +10,53 @@ const COMMANDS = {};
 let isWatching = false;
 let watcher = null;
 
+function validateCommand(commandName, config) {
+  const errors = [];
+
+  if (!config.type) {
+    errors.push('Missing required field: type');
+  } else if (!['simple', 'script', 'command_list'].includes(config.type)) {
+    errors.push('Invalid type. Must be: simple, script, or command_list');
+  }
+
+  if (config.enabled === undefined || config.enabled === null) {
+    errors.push('Missing required field: enabled');
+  }
+
+  if (!config.pattern) {
+    errors.push('Missing required field: pattern');
+  }
+
+  if (config.type === 'simple' && !config.reply) {
+    errors.push('Simple commands require "reply" field');
+  }
+
+  if (config.type === 'script' && !config.script) {
+    errors.push('Script commands require "script" field');
+  }
+
+  if (errors.length > 0) {
+    logWithDate(`Command "${commandName}" validation failed: ${errors.join(', ')}`);
+    return false;
+  }
+
+  return true;
+}
+
 function loadCommands() {
   try {
     const commandsPath = path.join(__dirname, 'command-list.json');
     const commandsData = readFileSync(commandsPath, 'utf8');
-    const newCommands = JSON.parse(commandsData);
+    const rawData = JSON.parse(commandsData);
+
+    const newCommands = {};
+    for (const [key, value] of Object.entries(rawData)) {
+      if (!key.startsWith('_') && typeof value === 'object') {
+        if (validateCommand(key, value)) {
+          newCommands[key] = value;
+        }
+      }
+    }
 
     for (const key in COMMANDS) {
       delete COMMANDS[key];
@@ -25,7 +67,7 @@ function loadCommands() {
     logWithDate(
       `Commands loaded successfully. Found ${
         Object.keys(COMMANDS).length
-      } commands.`,
+      } valid commands.`,
     );
     return true;
   } catch (error) {
@@ -83,25 +125,70 @@ export function cleanup() {
   }
 }
 
+function matchExactPattern(messageBody, commandName, config) {
+  if (messageBody === config.pattern) {
+    return { commandName, config, parameter: null };
+  }
+  return null;
+}
+
+function matchScriptCommand(messageBody, commandName, config) {
+  const requiresParameter = config.pattern.endsWith(':');
+  
+  if (requiresParameter) {
+    return matchScriptWithParameter(messageBody, commandName, config);
+  }
+  
+  return matchExactPattern(messageBody, commandName, config);
+}
+
+function matchScriptWithParameter(messageBody, commandName, config) {
+  if (!messageBody.startsWith(config.pattern)) {
+    return null;
+  }
+  
+  const parameter = messageBody.substring(config.pattern.length).trim();
+  if (!parameter) {
+    return null;
+  }
+  
+  return { commandName, config, parameter };
+}
+
+function matchCommand(messageBody, commandName, config) {
+  if (!config.enabled) {
+    return null;
+  }
+
+  if (config.type === 'simple') {
+    return matchExactPattern(messageBody, commandName, config);
+  }
+
+  if (config.type === 'command_list') {
+    return matchExactPattern(messageBody, commandName, config);
+  }
+
+  if (config.type === 'script') {
+    return matchScriptCommand(messageBody, commandName, config);
+  }
+
+  return null;
+}
+
 export function findCommand(messageBody) {
   if (!messageBody || typeof messageBody !== 'string') {
     return null;
   }
 
+  const trimmedMessage = messageBody.trim();
+  if (!trimmedMessage) {
+    return null;
+  }
+
   for (const [commandName, config] of Object.entries(COMMANDS)) {
-    if (!config.enabled) continue;
-
-    if (config.type === 'simple' || config.type === 'command_list') {
-      if (messageBody === config.pattern) {
-        return { commandName, config, parameter: null };
-      }
-    }
-
-    if (config.type === 'script') {
-      if (messageBody.startsWith(config.pattern)) {
-        const parameter = messageBody.substring(config.pattern.length).trim();
-        return { commandName, config, parameter: parameter || null };
-      }
+    const match = matchCommand(trimmedMessage, commandName, config);
+    if (match) {
+      return match;
     }
   }
 
