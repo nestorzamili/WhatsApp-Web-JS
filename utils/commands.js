@@ -125,7 +125,7 @@ export function cleanup() {
   }
 }
 
-function matchSimpleCommand(messageBody, commandName, config) {
+function matchExactPattern(messageBody, commandName, config) {
   if (messageBody === config.pattern) {
     return { commandName, config, parameter: null };
   }
@@ -139,7 +139,7 @@ function matchScriptCommand(messageBody, commandName, config) {
     return matchScriptWithParameter(messageBody, commandName, config);
   }
   
-  return matchScriptWithoutParameter(messageBody, commandName, config);
+  return matchExactPattern(messageBody, commandName, config);
 }
 
 function matchScriptWithParameter(messageBody, commandName, config) {
@@ -155,20 +155,17 @@ function matchScriptWithParameter(messageBody, commandName, config) {
   return { commandName, config, parameter };
 }
 
-function matchScriptWithoutParameter(messageBody, commandName, config) {
-  if (messageBody === config.pattern) {
-    return { commandName, config, parameter: null };
-  }
-  return null;
-}
-
 function matchCommand(messageBody, commandName, config) {
   if (!config.enabled) {
     return null;
   }
 
-  if (config.type === 'simple' || config.type === 'command_list') {
-    return matchSimpleCommand(messageBody, commandName, config);
+  if (config.type === 'simple') {
+    return matchExactPattern(messageBody, commandName, config);
+  }
+
+  if (config.type === 'command_list') {
+    return matchExactPattern(messageBody, commandName, config);
   }
 
   if (config.type === 'script') {
@@ -183,8 +180,13 @@ export function findCommand(messageBody) {
     return null;
   }
 
+  const trimmedMessage = messageBody.trim();
+  if (!trimmedMessage) {
+    return null;
+  }
+
   for (const [commandName, config] of Object.entries(COMMANDS)) {
-    const match = matchCommand(messageBody, commandName, config);
+    const match = matchCommand(trimmedMessage, commandName, config);
     if (match) {
       return match;
     }
