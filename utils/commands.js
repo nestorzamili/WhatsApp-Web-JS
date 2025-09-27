@@ -125,36 +125,68 @@ export function cleanup() {
   }
 }
 
+function matchSimpleCommand(messageBody, commandName, config) {
+  if (messageBody === config.pattern) {
+    return { commandName, config, parameter: null };
+  }
+  return null;
+}
+
+function matchScriptCommand(messageBody, commandName, config) {
+  const requiresParameter = config.pattern.endsWith(':');
+  
+  if (requiresParameter) {
+    return matchScriptWithParameter(messageBody, commandName, config);
+  }
+  
+  return matchScriptWithoutParameter(messageBody, commandName, config);
+}
+
+function matchScriptWithParameter(messageBody, commandName, config) {
+  if (!messageBody.startsWith(config.pattern)) {
+    return null;
+  }
+  
+  const parameter = messageBody.substring(config.pattern.length).trim();
+  if (!parameter) {
+    return null;
+  }
+  
+  return { commandName, config, parameter };
+}
+
+function matchScriptWithoutParameter(messageBody, commandName, config) {
+  if (messageBody === config.pattern) {
+    return { commandName, config, parameter: null };
+  }
+  return null;
+}
+
+function matchCommand(messageBody, commandName, config) {
+  if (!config.enabled) {
+    return null;
+  }
+
+  if (config.type === 'simple' || config.type === 'command_list') {
+    return matchSimpleCommand(messageBody, commandName, config);
+  }
+
+  if (config.type === 'script') {
+    return matchScriptCommand(messageBody, commandName, config);
+  }
+
+  return null;
+}
+
 export function findCommand(messageBody) {
   if (!messageBody || typeof messageBody !== 'string') {
     return null;
   }
 
   for (const [commandName, config] of Object.entries(COMMANDS)) {
-    if (!config.enabled) continue;
-
-    if (config.type === 'simple' || config.type === 'command_list') {
-      if (messageBody === config.pattern) {
-        return { commandName, config, parameter: null };
-      }
-    }
-
-    if (config.type === 'script') {
-      const requiresParameter = config.pattern.endsWith(':');
-      
-      if (requiresParameter) {
-        if (messageBody.startsWith(config.pattern)) {
-          const parameter = messageBody.substring(config.pattern.length).trim();
-          
-          if (parameter) {
-            return { commandName, config, parameter };
-          }
-        }
-      } else {
-        if (messageBody === config.pattern) {
-          return { commandName, config, parameter: null };
-        }
-      }
+    const match = matchCommand(messageBody, commandName, config);
+    if (match) {
+      return match;
     }
   }
 
