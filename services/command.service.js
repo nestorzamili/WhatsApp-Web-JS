@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { logWithDate } from '../utils/logger.js';
 import { findCommand, COMMANDS } from '../utils/commands.js';
 
+
 async function getContactName(message) {
   try {
     const contact = await message.getContact();
@@ -20,29 +21,47 @@ function formatFromInfo(fromId, fromName) {
 }
 
 async function isCommandAllowed(message, command) {
-  if (!command.groupOnly) return true;
-
   try {
     const chat = await message.getChat();
+    const chatId = chat.id?._serialized;
+    const chatName = chat.name || 'Unknown';
+    const commandIdentifier = command.script || command.pattern;
 
-    if (!chat.isGroup) {
-      logWithDate(
-        `${
-          command.script || command.pattern
-        } command attempted from private chat - ignored`,
-      );
-      return false;
+    const accessControl = command.access || 'both';
+
+    switch (accessControl) {
+      case 'personal':
+        if (chat.isGroup) {
+          logWithDate(
+            `${commandIdentifier} command attempted from group chat - personal only command`,
+          );
+          return false;
+        }
+        break;
+
+      case 'group':
+        if (!chat.isGroup) {
+          logWithDate(
+            `${commandIdentifier} command attempted from personal chat - group only command`,
+          );
+          return false;
+        }
+        break;
+
+      case 'both':
+        break;
+
+      default:
+        logWithDate(
+          `Invalid access control setting '${accessControl}' for command ${commandIdentifier}`,
+        );
+        return false;
     }
 
-    if (command.allowedGroups && command.allowedGroups.length > 0) {
-      const chatId = chat.id?._serialized;
+    if (chat.isGroup && command.allowedGroups && command.allowedGroups.length > 0) {
       if (!chatId || !command.allowedGroups.includes(chatId)) {
         logWithDate(
-          `${
-            command.script || command.pattern
-          } command attempted from unauthorized group: ${
-            chat.name || 'Unknown'
-          } (${chatId || 'Unknown ID'})`,
+          `${commandIdentifier} command attempted from unauthorized group: ${chatName} (${chatId || 'Unknown ID'})`,
         );
         return false;
       }
@@ -51,9 +70,7 @@ async function isCommandAllowed(message, command) {
     return true;
   } catch (error) {
     logWithDate(
-      `Error getting chat info for ${command.script || command.pattern}: ${
-        error.message
-      }`,
+      `Error checking access for ${command.script || command.pattern}: ${error.message}`,
     );
     return false;
   }
@@ -201,7 +218,7 @@ async function handleCommand(message, commandName, command, parameter = null) {
   }
 }
 
-async function handleMessage(client, message) {
+async function handleMessage(message) {
   const { body } = message;
 
   if (!body || typeof body !== 'string') {

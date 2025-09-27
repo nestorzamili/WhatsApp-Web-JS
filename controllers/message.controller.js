@@ -22,12 +22,14 @@ export const sendMessageController = async (req, res, client) => {
       );
     }
 
-    const targetIds = id.map((i) => String(i).trim()).filter(Boolean);
+    const targetIds = id
+      .map((i) => String(i).trim())
+      .filter((id) => id && (id.includes('@c.us') || id.includes('@g.us')));
 
     if (targetIds.length === 0) {
       return sendErrorResponse(
         res,
-        'At least one valid ID is required',
+        'At least one valid WhatsApp ID is required (format: number@c.us or number@g.us)',
         ERROR_CODES.MISSING_ID,
         null,
         HTTP_STATUS.BAD_REQUEST,
@@ -52,7 +54,6 @@ export const sendMessageController = async (req, res, client) => {
       }
     }
 
-    // Validasi konten
     if (!message?.trim() && !files?.length && !attachmentPaths?.length) {
       return sendErrorResponse(
         res,

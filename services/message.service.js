@@ -29,7 +29,7 @@ async function sendMessage(client, id, options = {}) {
 
     throw new Error('No content provided to send');
   } catch (error) {
-    logWithDate(`Error sending message to ${id}: ${error}`);
+    logWithDate(`Error sending message to ${id}: ${error.message}`);
     throw error;
   }
 }
@@ -109,7 +109,7 @@ async function getGroupID(client, groupName) {
       return null;
     }
   } catch (error) {
-    logWithDate(`Error finding group "${groupName}": ${error}`);
+    logWithDate(`Error finding group "${groupName}": ${error.message}`);
     return null;
   }
 }
