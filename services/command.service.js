@@ -297,7 +297,7 @@ async function handleCommand(message, commandName, command, parameter = null) {
       case COMMAND_TYPES.SCRIPT:
         return await handleScriptCommand(message, from, command, parameter);
 
-      case COMMAND_TYPES.COMMAND_LIST:
+      case COMMAND_TYPES.COMMAND_LIST: {
         const commandList = generateCommandList();
         await message.reply(commandList);
         const contactInfo = await getContactInfo(message);
@@ -308,6 +308,7 @@ async function handleCommand(message, commandName, command, parameter = null) {
           )}`,
         );
         return;
+      }
 
       default:
         logger.warn(`Unknown command type: ${command.type}`);

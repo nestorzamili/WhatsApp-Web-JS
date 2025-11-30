@@ -33,9 +33,10 @@ export function sanitizeParameter(parameter) {
     };
   }
 
-  const dangerousMatches = trimmed.match(DANGEROUS_CHARS_REGEX);
+  const dangerousMatches = DANGEROUS_CHARS_REGEX.exec(trimmed);
   if (dangerousMatches) {
-    const uniqueChars = [...new Set(dangerousMatches)];
+    const allMatches = trimmed.match(DANGEROUS_CHARS_REGEX);
+    const uniqueChars = [...new Set(allMatches)];
     warnings.push(`Removed dangerous characters: ${uniqueChars.join(', ')}`);
     logger.info(
       `Sanitizer: Removed dangerous characters from parameter: ${uniqueChars.join(
@@ -110,5 +111,3 @@ export function validateCommandPattern(pattern) {
 
   return { valid: true };
 }
-
-

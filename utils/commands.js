@@ -19,37 +19,38 @@ let isWatching = false;
 let watcher = null;
 let reloadTimeout = null;
 
-function validateCommand(commandName, config) {
+const VALID_TYPES = Object.values(COMMAND_TYPES);
+const VALID_ACCESS = Object.values(ACCESS_TYPES);
+
+function getValidationErrors(commandName, config) {
   const errors = [];
 
-  if (!config.type) {
+  if (config.type) {
+    if (!VALID_TYPES.includes(config.type)) {
+      errors.push(
+        `Invalid type "${config.type}". Must be: ${VALID_TYPES.join(', ')}`,
+      );
+    }
+  } else {
     errors.push('Missing required field: type');
-  } else if (!Object.values(COMMAND_TYPES).includes(config.type)) {
-    errors.push(
-      `Invalid type "${config.type}". Must be: ${Object.values(
-        COMMAND_TYPES,
-      ).join(', ')}`,
-    );
   }
 
   if (config.enabled === undefined || config.enabled === null) {
     errors.push('Missing required field: enabled');
   }
 
-  if (!config.pattern) {
-    errors.push('Missing required field: pattern');
-  } else {
+  if (config.pattern) {
     const patternValidation = validateCommandPattern(config.pattern);
     if (!patternValidation.valid) {
       errors.push(`Invalid pattern: ${patternValidation.error}`);
     }
+  } else {
+    errors.push('Missing required field: pattern');
   }
 
-  if (config.access && !Object.values(ACCESS_TYPES).includes(config.access)) {
+  if (config.access && !VALID_ACCESS.includes(config.access)) {
     errors.push(
-      `Invalid access "${config.access}". Must be: ${Object.values(
-        ACCESS_TYPES,
-      ).join(', ')}`,
+      `Invalid access "${config.access}". Must be: ${VALID_ACCESS.join(', ')}`,
     );
   }
 
@@ -64,6 +65,12 @@ function validateCommand(commandName, config) {
   if (config.allowedGroups && !Array.isArray(config.allowedGroups)) {
     errors.push('allowedGroups must be an array');
   }
+
+  return errors;
+}
+
+function validateCommand(commandName, config) {
+  const errors = getValidationErrors(commandName, config);
 
   if (errors.length > 0) {
     logger.warn(
@@ -145,10 +152,8 @@ function setupFileWatcher() {
   }
 }
 
-(async () => {
-  await loadCommands();
-  setupFileWatcher();
-})();
+await loadCommands();
+setupFileWatcher();
 
 export { COMMANDS };
 

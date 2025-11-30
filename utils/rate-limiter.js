@@ -68,21 +68,18 @@ export function checkRateLimit(userId) {
 
 export function recordCommandUsage(userId) {
   const now = Date.now();
-  let entry = userRateLimits.get(userId);
+  const entry = userRateLimits.get(userId);
 
-  if (!entry) {
-    entry = { commandTimestamps: [now] };
-    userRateLimits.set(userId, entry);
-  } else {
+  if (entry) {
     entry.commandTimestamps.push(now);
 
     const windowStart = now - RATE_LIMIT_WINDOW_MS;
     entry.commandTimestamps = entry.commandTimestamps.filter(
       (timestamp) => timestamp > windowStart,
     );
+  } else {
+    userRateLimits.set(userId, { commandTimestamps: [now] });
   }
 }
 
 initRateLimiter();
-
-
