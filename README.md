@@ -19,18 +19,26 @@ Scan QR code with WhatsApp to authenticate.
 ## Environment
 
 ```env
+NODE_ENV=development
 PORT=3000
 API_KEY=your_api_key_here
 ```
 
 Generate API key:
 ```bash
-node -e "console.log('whatsapp_' + require('crypto').randomBytes(32).toString('hex'))"
+node -e "console.log('samunu_' + require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 ## Commands
 
-Configure commands in `utils/command-list.json`. Changes auto-reload without restart.
+Configure commands in `command-list.json` (root folder). Changes auto-reload without restart.
+
+```bash
+# Copy the example file to create your command configuration
+cp command-list.example.json command-list.json
+```
+
+> **Note:** `command-list.json` is gitignored. If the file doesn't exist, the command system will be disabled but the REST API will continue to work normally.
 
 ### Simple Command
 ```json
@@ -123,7 +131,7 @@ curl -H "x-api-key: YOUR_KEY" "http://localhost:3000/get-group-id?groupName=My%2
 
 ## License
 
-Apache-2.0 License - see `LICENSE` file for details.
+Apache-2.0 License - see [LICENSE](LICENSE) file for details.
 
 ---
 
