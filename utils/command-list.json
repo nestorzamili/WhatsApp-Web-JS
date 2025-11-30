@@ -1,14 +1,33 @@
 {
-  "_comment": "Command List Configuration - Field Documentation",
+  "_comment": "Command List Configuration",
   "_fields": {
-    "type": "REQUIRED - 'simple', 'script', or 'command_list' (example: 'simple')",
-    "enabled": "REQUIRED - true or false (example: true)",
-    "pattern": "REQUIRED - command trigger pattern (example: '!ping', '!script:')",
-    "access": "OPTIONAL - 'personal', 'group', or 'both' (default: 'both', example: 'group')",
-    "reply": "OPTIONAL - response text for simple commands (example: 'Hello World!')",
-    "script": "OPTIONAL - script command to execute (required for script type, example: 'python3 script.py')",
-    "cwd": "OPTIONAL - working directory for script (default: current directory, example: './scripts')",
-    "allowedGroups": "OPTIONAL - array of group IDs for restricted access (example: ['120363123456789012@g.us'])",
-    "param_placeholder": "OPTIONAL - parameter description for help text (example: '<parameter>')"
+    "type": "'simple', 'script', or 'command_list'",
+    "enabled": "true or false",
+    "pattern": "command trigger pattern (e.g., '!ping', '!script:')",
+    "description": "command description for help text",
+    "access": "'personal', 'group', or 'both' (default: 'both')",
+    "reply": "response text for simple commands",
+    "script": "script command to execute (required for script type)",
+    "cwd": "working directory for script (default: current directory)",
+    "allowedGroups": "array of group IDs for restricted access",
+    "param_placeholder": "parameter description for help text",
+    "caseSensitive": "true or false (default: true)"
+  },
+
+  "ping": {
+    "type": "simple",
+    "enabled": true,
+    "pattern": "!ping",
+    "description": "Check bot status",
+    "reply": "🏓 Pong! Bot is active.",
+    "caseSensitive": false
+  },
+
+  "help": {
+    "type": "command_list",
+    "enabled": true,
+    "pattern": "!help",
+    "description": "Show command list",
+    "caseSensitive": false
   }
 }

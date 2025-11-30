@@ -1,77 +1,130 @@
-import { readFileSync, watch } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import { watch } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { logWithDate } from './logger.js';
+import logger from './logger.js';
+import { validateCommandPattern } from './sanitizer.js';
+import {
+  FILE_WATCH_DEBOUNCE_MS,
+  COMMAND_TYPES,
+  ACCESS_TYPES,
+} from './constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const COMMANDS = {};
+
 let isWatching = false;
 let watcher = null;
+let reloadTimeout = null;
 
-function validateCommand(commandName, config) {
+const VALID_TYPES = Object.values(COMMAND_TYPES);
+const VALID_ACCESS = Object.values(ACCESS_TYPES);
+
+function validateType(config) {
+  if (!config.type) {
+    return 'Missing required field: type';
+  }
+  if (!VALID_TYPES.includes(config.type)) {
+    return `Invalid type "${config.type}". Must be: ${VALID_TYPES.join(', ')}`;
+  }
+  return null;
+}
+
+function validatePattern(config) {
+  if (!config.pattern) {
+    return 'Missing required field: pattern';
+  }
+  const patternValidation = validateCommandPattern(config.pattern);
+  if (!patternValidation.valid) {
+    return `Invalid pattern: ${patternValidation.error}`;
+  }
+  return null;
+}
+
+function validateTypeSpecificFields(config) {
+  const errors = [];
+  if (config.type === COMMAND_TYPES.SIMPLE && !config.reply) {
+    errors.push('Simple commands require "reply" field');
+  }
+  if (config.type === COMMAND_TYPES.SCRIPT && !config.script) {
+    errors.push('Script commands require "script" field');
+  }
+  return errors;
+}
+
+function getValidationErrors(commandName, config) {
   const errors = [];
 
-  if (!config.type) {
-    errors.push('Missing required field: type');
-  } else if (!['simple', 'script', 'command_list'].includes(config.type)) {
-    errors.push('Invalid type. Must be: simple, script, or command_list');
-  }
+  const typeError = validateType(config);
+  if (typeError) errors.push(typeError);
 
   if (config.enabled === undefined || config.enabled === null) {
     errors.push('Missing required field: enabled');
   }
 
-  if (!config.pattern) {
-    errors.push('Missing required field: pattern');
+  const patternError = validatePattern(config);
+  if (patternError) errors.push(patternError);
+
+  if (config.access && !VALID_ACCESS.includes(config.access)) {
+    errors.push(
+      `Invalid access "${config.access}". Must be: ${VALID_ACCESS.join(', ')}`,
+    );
   }
 
-  if (config.type === 'simple' && !config.reply) {
-    errors.push('Simple commands require "reply" field');
+  errors.push(...validateTypeSpecificFields(config));
+
+  if (config.allowedGroups && !Array.isArray(config.allowedGroups)) {
+    errors.push('allowedGroups must be an array');
   }
 
-  if (config.type === 'script' && !config.script) {
-    errors.push('Script commands require "script" field');
-  }
+  return errors;
+}
+
+function validateCommand(commandName, config) {
+  const errors = getValidationErrors(commandName, config);
 
   if (errors.length > 0) {
-    logWithDate(`Command "${commandName}" validation failed: ${errors.join(', ')}`);
+    logger.warn(
+      `Command "${commandName}" validation failed: ${errors.join(', ')}`,
+    );
     return false;
   }
 
   return true;
 }
 
-function loadCommands() {
+async function loadCommands() {
   try {
     const commandsPath = path.join(__dirname, 'command-list.json');
-    const commandsData = readFileSync(commandsPath, 'utf8');
+    const commandsData = await readFile(commandsPath, 'utf8');
     const rawData = JSON.parse(commandsData);
 
     const newCommands = {};
+
     for (const [key, value] of Object.entries(rawData)) {
-      if (!key.startsWith('_') && typeof value === 'object') {
-        if (validateCommand(key, value)) {
-          newCommands[key] = value;
-        }
+      if (key.startsWith('_') || typeof value !== 'object') {
+        continue;
+      }
+
+      if (validateCommand(key, value)) {
+        value.caseSensitive = value.caseSensitive ?? true;
+        value.access = value.access || ACCESS_TYPES.BOTH;
+
+        newCommands[key] = value;
       }
     }
 
     for (const key in COMMANDS) {
       delete COMMANDS[key];
     }
-
     Object.assign(COMMANDS, newCommands);
 
-    logWithDate(
-      `Commands loaded successfully. Found ${
-        Object.keys(COMMANDS).length
-      } valid commands.`,
-    );
+    logger.info(`Commands loaded: ${Object.keys(COMMANDS).length} commands`);
     return true;
   } catch (error) {
-    logWithDate(`Error loading command-list.json: ${error.message}`);
+    logger.error(`Error loading command-list.json: ${error.message}`);
     for (const key in COMMANDS) {
       delete COMMANDS[key];
     }
@@ -87,30 +140,32 @@ function setupFileWatcher() {
 
     watcher = watch(commandsPath, { persistent: false }, (eventType) => {
       if (eventType === 'change') {
-        clearTimeout(watcher.reloadTimeout);
-        watcher.reloadTimeout = setTimeout(() => {
-          logWithDate('command-list.json file changed, reloading...');
-          const success = loadCommands();
+        if (reloadTimeout) {
+          clearTimeout(reloadTimeout);
+        }
+        reloadTimeout = setTimeout(async () => {
+          logger.info('command-list.json changed, reloading...');
+          const success = await loadCommands();
           if (success) {
-            logWithDate('Commands reloaded automatically due to file change.');
+            logger.info('Commands reloaded automatically');
           }
-        }, 100);
+        }, FILE_WATCH_DEBOUNCE_MS);
       }
     });
 
     watcher.on('error', (error) => {
-      logWithDate(`File watcher error: ${error.message}`);
+      logger.warn(`File watcher error: ${error.message}`);
       isWatching = false;
     });
 
     isWatching = true;
-    logWithDate('File watcher setup for command-list.json');
+    logger.info('File watcher setup for command-list.json');
   } catch (error) {
-    logWithDate(`Error setting up file watcher: ${error.message}`);
+    logger.error(`Error setting up file watcher: ${error.message}`);
   }
 }
 
-loadCommands();
+await loadCommands();
 setupFileWatcher();
 
 export { COMMANDS };
@@ -118,41 +173,55 @@ export { COMMANDS };
 export function cleanup() {
   if (watcher) {
     watcher.close();
-    if (watcher.reloadTimeout) {
-      clearTimeout(watcher.reloadTimeout);
-    }
-    logWithDate('File watcher cleanup completed');
+    watcher = null;
   }
+  if (reloadTimeout) {
+    clearTimeout(reloadTimeout);
+    reloadTimeout = null;
+  }
+  isWatching = false;
+  logger.info('Command file watcher cleanup completed');
+}
+
+function normalizeForMatch(message, caseSensitive) {
+  return caseSensitive ? message : message.toLowerCase();
 }
 
 function matchExactPattern(messageBody, commandName, config) {
-  if (messageBody === config.pattern) {
+  const caseSensitive = config.caseSensitive !== false;
+  const normalizedMessage = normalizeForMatch(messageBody, caseSensitive);
+  const normalizedPattern = normalizeForMatch(config.pattern, caseSensitive);
+
+  if (normalizedMessage === normalizedPattern) {
     return { commandName, config, parameter: null };
   }
+
   return null;
 }
 
 function matchScriptCommand(messageBody, commandName, config) {
   const requiresParameter = config.pattern.endsWith(':');
-  
+
   if (requiresParameter) {
     return matchScriptWithParameter(messageBody, commandName, config);
   }
-  
+
   return matchExactPattern(messageBody, commandName, config);
 }
 
 function matchScriptWithParameter(messageBody, commandName, config) {
-  if (!messageBody.startsWith(config.pattern)) {
-    return null;
+  const caseSensitive = config.caseSensitive !== false;
+  const normalizedMessage = normalizeForMatch(messageBody, caseSensitive);
+  const normalizedPattern = normalizeForMatch(config.pattern, caseSensitive);
+
+  if (normalizedMessage.startsWith(normalizedPattern)) {
+    const parameter = messageBody.substring(config.pattern.length).trim();
+    if (parameter) {
+      return { commandName, config, parameter };
+    }
   }
-  
-  const parameter = messageBody.substring(config.pattern.length).trim();
-  if (!parameter) {
-    return null;
-  }
-  
-  return { commandName, config, parameter };
+
+  return null;
 }
 
 function matchCommand(messageBody, commandName, config) {
@@ -160,19 +229,17 @@ function matchCommand(messageBody, commandName, config) {
     return null;
   }
 
-  if (config.type === 'simple') {
-    return matchExactPattern(messageBody, commandName, config);
-  }
+  switch (config.type) {
+    case COMMAND_TYPES.SIMPLE:
+    case COMMAND_TYPES.COMMAND_LIST:
+      return matchExactPattern(messageBody, commandName, config);
 
-  if (config.type === 'command_list') {
-    return matchExactPattern(messageBody, commandName, config);
-  }
+    case COMMAND_TYPES.SCRIPT:
+      return matchScriptCommand(messageBody, commandName, config);
 
-  if (config.type === 'script') {
-    return matchScriptCommand(messageBody, commandName, config);
+    default:
+      return null;
   }
-
-  return null;
 }
 
 export function findCommand(messageBody) {
@@ -193,4 +260,10 @@ export function findCommand(messageBody) {
   }
 
   return null;
+}
+
+export function getEnabledCommands() {
+  return Object.entries(COMMANDS)
+    .filter(([, config]) => config.enabled)
+    .map(([name, config]) => ({ name, ...config }));
 }

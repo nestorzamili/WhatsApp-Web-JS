@@ -3,7 +3,7 @@ import express, { json, text, urlencoded } from 'express';
 import qrcode from 'qrcode-terminal';
 import whatsappWeb from 'whatsapp-web.js';
 
-import { logWithDate } from './utils/logger.js';
+import logger from './utils/logger.js';
 import puppeteerConfig from './utils/puppeteer.config.js';
 import routes from './routes/index.route.js';
 import handleMessage from './services/command.service.js';
@@ -40,18 +40,18 @@ const client = new Client({
 });
 
 const startServer = () => {
-  logWithDate('WhatsApp API is ready to use!');
+  logger.info('WhatsApp API is ready to use!');
 
   const server = app.listen(PORT, () =>
-    logWithDate(`Server running on port ${PORT}`),
+    logger.info(`Server running on port ${PORT}`),
   );
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      logWithDate(`Port ${PORT} is already in use, trying another port...`);
+      logger.warn(`Port ${PORT} is already in use, trying another port...`);
       server.listen(0);
     } else {
-      logWithDate(`Server error: ${err.message}`);
+      logger.error(`Server error: ${err.message}`);
       throw err;
     }
   });
@@ -59,11 +59,11 @@ const startServer = () => {
 
 client.on('qr', (qr) => qrcode.generate(qr, { small: true }));
 client.on('loading_screen', (percent, message) =>
-  logWithDate(`Loading: ${percent}% - ${message}`),
+  logger.info(`Loading: ${percent}% - ${message}`),
 );
-client.on('auth_failure', () => logWithDate('Authentication failure!'));
-client.on('disconnected', () => logWithDate('Client disconnected!'));
-client.on('authenticated', () => logWithDate('Client authenticated!'));
+client.on('auth_failure', () => logger.error('Authentication failure!'));
+client.on('disconnected', () => logger.warn('Client disconnected!'));
+client.on('authenticated', () => logger.info('Client authenticated!'));
 client.on('ready', startServer);
 client.on('message', async (message) => {
   await handleMessage(message);
@@ -73,26 +73,26 @@ routes(app, client);
 client.initialize();
 
 process.on('SIGINT', () => {
-  logWithDate('Received SIGINT, shutting down gracefully...');
+  logger.info('Received SIGINT, shutting down gracefully...');
   cleanup();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  logWithDate('Received SIGTERM, shutting down gracefully...');
+  logger.info('Received SIGTERM, shutting down gracefully...');
   cleanup();
   process.exit(0);
 });
 
 process.on('uncaughtException', (error) => {
-  logWithDate(`Uncaught Exception: ${error.message}`);
-  logWithDate(`Stack: ${error.stack}`);
+  logger.error(`Uncaught Exception: ${error.message}`);
+  logger.error(`Stack: ${error.stack}`);
   cleanup();
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logWithDate(`Unhandled Rejection at: ${promise}, reason: ${reason}`);
+  logger.error(`Unhandled Rejection at: ${promise}, reason: ${reason}`);
   cleanup();
   process.exit(1);
 });
