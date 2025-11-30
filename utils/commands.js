@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
-import { watch } from 'node:fs';
+import { readFile, access } from 'node:fs/promises';
+import { watch, constants } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import logger from './logger.js';
@@ -12,9 +12,11 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const COMMANDS_PATH = path.join(__dirname, '..', 'command-list.json');
 
 const COMMANDS = {};
 
+let commandSystemEnabled = true;
 let isWatching = false;
 let watcher = null;
 let reloadTimeout = null;
@@ -97,8 +99,20 @@ function validateCommand(commandName, config) {
 
 async function loadCommands() {
   try {
-    const commandsPath = path.join(__dirname, 'command-list.json');
-    const commandsData = await readFile(commandsPath, 'utf8');
+    try {
+      await access(COMMANDS_PATH, constants.R_OK);
+    } catch {
+      logger.info(
+        'command-list.json not found. Command system disabled. Copy command-list.example.json to command-list.json to enable.',
+      );
+      commandSystemEnabled = false;
+      for (const key in COMMANDS) {
+        delete COMMANDS[key];
+      }
+      return false;
+    }
+
+    const commandsData = await readFile(COMMANDS_PATH, 'utf8');
     const rawData = JSON.parse(commandsData);
 
     const newCommands = {};
@@ -121,6 +135,7 @@ async function loadCommands() {
     }
     Object.assign(COMMANDS, newCommands);
 
+    commandSystemEnabled = true;
     logger.info(`Commands loaded: ${Object.keys(COMMANDS).length} commands`);
     return true;
   } catch (error) {
@@ -133,12 +148,10 @@ async function loadCommands() {
 }
 
 function setupFileWatcher() {
-  if (isWatching) return;
+  if (isWatching || !commandSystemEnabled) return;
 
   try {
-    const commandsPath = path.join(__dirname, 'command-list.json');
-
-    watcher = watch(commandsPath, { persistent: false }, (eventType) => {
+    watcher = watch(COMMANDS_PATH, { persistent: false }, (eventType) => {
       if (eventType === 'change') {
         if (reloadTimeout) {
           clearTimeout(reloadTimeout);
