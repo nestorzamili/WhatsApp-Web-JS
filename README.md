@@ -5,194 +5,123 @@ WhatsApp bot built with Express.js featuring dynamic command system, REST API, a
 ## GitAds Sponsored
 [![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=nestorzamili/whatsapp-web-js@github)](https://gitads.dev/v1/ad-track?source=nestorzamili/whatsapp-web-js@github)
 
-## 🚀 Quick Start
+## Quick Start
 
-1. **Clone & Install**
-   ```bash
-   git clone https://github.com/nestorzamili/whatsapp-web-js.git
-   cd whatsapp-web-js
-   npm install
-   ```
+```bash
+git clone https://github.com/nestorzamili/whatsapp-web-js.git
+cd whatsapp-web-js
+npm install
+npm start
+```
 
-2. **Configure Environment**
-   ```env
-   PORT=3000
-   API_KEY=your_api_key_here
-   ```
+Scan QR code with WhatsApp to authenticate.
 
-3. **Start & Authenticate**
-   ```bash
-   npm start
-   # Scan QR code with WhatsApp
-   ```
+## Environment
 
-## 🔐 Authentication
+```env
+PORT=3000
+API_KEY=your_api_key_here
+```
 
 Generate API key:
 ```bash
 node -e "console.log('whatsapp_' + require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Use `x-api-key` header for all API requests.
+## Commands
 
-## 🤖 Command System
+Configure commands in `utils/command-list.json`. Changes auto-reload without restart.
 
-### Command Types
-
-#### 1. Simple Commands
+### Simple Command
 ```json
 {
   "ping": {
     "type": "simple",
     "enabled": true,
-    "access": "both",
     "pattern": "!ping",
-    "reply": "Pong!"
+    "description": "Check bot status",
+    "reply": "🏓 Pong!"
   }
 }
 ```
 
-#### 2. Script Commands
+### Script Command
 ```json
 {
-  "schedule": {
+  "weather": {
     "type": "script",
     "enabled": true,
-    "access": "group",
-    "script": "python3 getSchedule.py",
-    "cwd": "./samunu",
-    "pattern": "!jadwal:",
-    "param_placeholder": "<hari>"
+    "pattern": "!weather:",
+    "description": "Get weather info",
+    "script": "python weather.py",
+    "cwd": "./scripts",
+    "param_placeholder": "<city>"
   }
 }
 ```
+Usage: `!weather:Jakarta`
 
-#### 3. Command List
+### Command List
 ```json
 {
   "help": {
     "type": "command_list",
     "enabled": true,
-    "access": "both",
-    "pattern": "!help"
+    "pattern": "!help",
+    "description": "Show available commands"
   }
 }
 ```
 
-### Access Control
-
-| Access | Description | Example |
-|--------|-------------|---------|
-| `"personal"` | Personal chats only | `"access": "personal"` |
-| `"group"` | All groups | `"access": "group"` |
-| `"both"` | Personal + groups (default) | `"access": "both"` |
-
-### Group Restrictions
-```json
-{
-  "admin": {
-    "type": "simple",
-    "enabled": true,
-    "access": "group",
-    "allowedGroups": ["120363123456789012@g.us"],
-    "pattern": "!admin",
-    "reply": "Admin command"
-  }
-}
-```
-
-### Command Configuration
+### Configuration Options
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `type` | ✅ | `simple`, `script`, `command_list` |
-| `enabled` | ✅ | `true` or `false` |
-| `pattern` | ✅ | Command trigger pattern |
-| `access` | ❌ | `personal`, `group`, `both` (default: `both`) |
-| `reply` | ❌ | Response text (simple commands) |
-| `script` | ❌ | Script command (script commands) |
-| `cwd` | ❌ | Working directory (default: current) |
-| `allowedGroups` | ❌ | Array of group IDs for restrictions |
-| `param_placeholder` | ❌ | Parameter description for help |
+| `type` | ✅ | `simple`, `script`, or `command_list` |
+| `enabled` | ✅ | Enable/disable command |
+| `pattern` | ✅ | Trigger pattern (add `:` suffix for parameters) |
+| `description` | | Help text description |
+| `reply` | ✅* | Response for simple commands (*required for simple type) |
+| `script` | ✅* | Executable command (*required for script type) |
+| `cwd` | | Working directory for script (default: current) |
+| `access` | | `personal`, `group`, or `both` (default: `both`) |
+| `allowedGroups` | | Restrict to specific group IDs |
+| `caseSensitive` | | Case sensitivity (default: `true`) |
+| `param_placeholder` | | Parameter description for help text |
 
-### Auto-Reload
-- Changes to `command-list.json` are detected automatically
-- No restart required
-- ~100ms detection time
+## API
 
-## 🌐 API Endpoints
-
-### Health Check
-```bash
-GET /
-curl -H "x-api-key: your_key" http://localhost:3000/
-```
+All requests require `x-api-key` header.
 
 ### Send Message
 ```bash
-POST /send-message
-```
-
-**Text Message (JSON):**
-```bash
+# Text
 curl -X POST http://localhost:3000/send-message \
-  -H "x-api-key: your_key" \
+  -H "x-api-key: YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{
-    "id": ["6281234567890@c.us"],
-    "message": "Hello World!"
-  }'
-```
+  -d '{"id": ["6281234567890@c.us"], "message": "Hello!"}'
 
-**File Upload (Form-Data):**
-```bash
+# With file
 curl -X POST http://localhost:3000/send-message \
-  -H "x-api-key: your_key" \
+  -H "x-api-key: YOUR_KEY" \
   -F "id[]=6281234567890@c.us" \
-  -F "message=Check this file" \
-  -F "files=@/path/to/file.jpg"
-```
-
-**Server Files (JSON):**
-```bash
-curl -X POST http://localhost:3000/send-message \
-  -H "x-api-key: your_key" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": ["6281234567890@c.us"],
-    "message": "File from server",
-    "filePaths": ["/path/to/file.pdf"]
-  }'
+  -F "message=Check this" \
+  -F "files=@photo.jpg"
 ```
 
 ### Get Group ID
 ```bash
-GET /get-group-id?groupName=YourGroupName
-curl -H "x-api-key: your_key" "http://localhost:3000/get-group-id?groupName=My%20Group"
+curl -H "x-api-key: YOUR_KEY" "http://localhost:3000/get-group-id?groupName=My%20Group"
 ```
 
-## 📋 API Parameters
+## Security
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `id` | array | ✅ | WhatsApp IDs (personal: `@c.us`, group: `@g.us`) |
-| `message` | string | ❌ | Text message |
-| `filePaths` | array | ❌ | Server file paths |
-| `files` | file(s) | ❌ | Upload files (form-data only) |
+- Parameter sanitization (prevents command injection)
+- Rate limiting (3 commands/minute per user)
+- Script timeout (30 seconds)
+- API key authentication
 
-*At least one of: `message`, `files`, or `filePaths` required*
-
-## 🔧 Key Features
-
-- **Dynamic Commands**: Add/modify commands without restart
-- **Access Control**: Personal, group, or restricted access
-- **File Support**: Upload files or use server paths
-- **Auto-Reload**: Command changes applied instantly
-- **Clean API**: Consistent JSON responses
-- **Session Persistence**: WhatsApp session preserved
-- **Comprehensive Logging**: Detailed operation logs
-
-## 📄 License
+## License
 
 Apache-2.0 License - see `LICENSE` file for details.
 

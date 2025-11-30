@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { basename } from 'node:path';
 import whatsappWeb from 'whatsapp-web.js';
-import { logWithDate } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 import { getMimeType, isWhatsAppSupported } from '../utils/mimeTypes.js';
 
 const { MessageMedia } = whatsappWeb;
@@ -23,13 +23,13 @@ async function sendMessage(client, id, options = {}) {
 
     if (message) {
       const sentMessage = await client.sendMessage(id, message);
-      logWithDate(`Text message sent to ${chatName}`);
+      logger.info(`Text message sent to ${chatName}`);
       return sentMessage;
     }
 
     throw new Error('No content provided to send');
   } catch (error) {
-    logWithDate(`Error sending message to ${id}: ${error.message}`);
+    logger.error(`Error sending message to ${id}: ${error.message}`);
     throw error;
   }
 }
@@ -41,7 +41,7 @@ async function sendFilesByPath(client, id, filePaths, message, chatName) {
     const sentMessage = await client.sendMessage(id, media, {
       caption: message,
     });
-    logWithDate(`File "${filePath}" sent to ${chatName}`);
+    logger.info(`File "${filePath}" sent to ${chatName}`);
     results.push(sentMessage);
   }
   return results;
@@ -54,7 +54,7 @@ async function sendFilesByUpload(client, id, files, message, chatName) {
     const sentMessage = await client.sendMessage(id, media, {
       caption: message,
     });
-    logWithDate(`File "${file.originalname}" sent to ${chatName}`);
+    logger.info(`File "${file.originalname}" sent to ${chatName}`);
     results.push(sentMessage);
   }
   return results;
@@ -102,14 +102,14 @@ async function getGroupID(client, groupName) {
       }))[0];
 
     if (targetGroup) {
-      logWithDate(`Group ID found for "${groupName}": ${targetGroup.id}`);
+      logger.info(`Group ID found for "${groupName}": ${targetGroup.id}`);
       return targetGroup.id;
     } else {
-      logWithDate(`Group "${groupName}" not found`);
+      logger.warn(`Group "${groupName}" not found`);
       return null;
     }
   } catch (error) {
-    logWithDate(`Error finding group "${groupName}": ${error.message}`);
+    logger.error(`Error finding group "${groupName}": ${error.message}`);
     return null;
   }
 }

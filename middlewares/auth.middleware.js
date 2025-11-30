@@ -4,7 +4,7 @@ import {
   HTTP_STATUS,
   ERROR_CODES,
 } from '../utils/response.js';
-import { logWithDate } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 export default function verifyKey(req, res, next) {
   const apiKey = req.headers['x-api-key'];
@@ -12,7 +12,7 @@ export default function verifyKey(req, res, next) {
   const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
 
   if (!apiKey || apiKey !== validApiKey) {
-    logWithDate(`AUTH FAILED - IP: ${clientIP}`);
+    logger.info(`AUTH FAILED - IP: ${clientIP}`);
     return sendErrorResponse(
       res,
       'Unauthorized access',
@@ -24,3 +24,5 @@ export default function verifyKey(req, res, next) {
 
   next();
 }
+
+
