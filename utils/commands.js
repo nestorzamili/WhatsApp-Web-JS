@@ -22,31 +22,50 @@ let reloadTimeout = null;
 const VALID_TYPES = Object.values(COMMAND_TYPES);
 const VALID_ACCESS = Object.values(ACCESS_TYPES);
 
+function validateType(config) {
+  if (!config.type) {
+    return 'Missing required field: type';
+  }
+  if (!VALID_TYPES.includes(config.type)) {
+    return `Invalid type "${config.type}". Must be: ${VALID_TYPES.join(', ')}`;
+  }
+  return null;
+}
+
+function validatePattern(config) {
+  if (!config.pattern) {
+    return 'Missing required field: pattern';
+  }
+  const patternValidation = validateCommandPattern(config.pattern);
+  if (!patternValidation.valid) {
+    return `Invalid pattern: ${patternValidation.error}`;
+  }
+  return null;
+}
+
+function validateTypeSpecificFields(config) {
+  const errors = [];
+  if (config.type === COMMAND_TYPES.SIMPLE && !config.reply) {
+    errors.push('Simple commands require "reply" field');
+  }
+  if (config.type === COMMAND_TYPES.SCRIPT && !config.script) {
+    errors.push('Script commands require "script" field');
+  }
+  return errors;
+}
+
 function getValidationErrors(commandName, config) {
   const errors = [];
 
-  if (config.type) {
-    if (!VALID_TYPES.includes(config.type)) {
-      errors.push(
-        `Invalid type "${config.type}". Must be: ${VALID_TYPES.join(', ')}`,
-      );
-    }
-  } else {
-    errors.push('Missing required field: type');
-  }
+  const typeError = validateType(config);
+  if (typeError) errors.push(typeError);
 
   if (config.enabled === undefined || config.enabled === null) {
     errors.push('Missing required field: enabled');
   }
 
-  if (config.pattern) {
-    const patternValidation = validateCommandPattern(config.pattern);
-    if (!patternValidation.valid) {
-      errors.push(`Invalid pattern: ${patternValidation.error}`);
-    }
-  } else {
-    errors.push('Missing required field: pattern');
-  }
+  const patternError = validatePattern(config);
+  if (patternError) errors.push(patternError);
 
   if (config.access && !VALID_ACCESS.includes(config.access)) {
     errors.push(
@@ -54,13 +73,7 @@ function getValidationErrors(commandName, config) {
     );
   }
 
-  if (config.type === COMMAND_TYPES.SIMPLE && !config.reply) {
-    errors.push('Simple commands require "reply" field');
-  }
-
-  if (config.type === COMMAND_TYPES.SCRIPT && !config.script) {
-    errors.push('Script commands require "script" field');
-  }
+  errors.push(...validateTypeSpecificFields(config));
 
   if (config.allowedGroups && !Array.isArray(config.allowedGroups)) {
     errors.push('allowedGroups must be an array');

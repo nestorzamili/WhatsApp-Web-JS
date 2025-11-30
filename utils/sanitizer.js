@@ -33,9 +33,12 @@ export function sanitizeParameter(parameter) {
     };
   }
 
-  const dangerousMatches = DANGEROUS_CHARS_REGEX.exec(trimmed);
-  if (dangerousMatches) {
-    const allMatches = trimmed.match(DANGEROUS_CHARS_REGEX);
+  const allMatches = [];
+  let match;
+  while ((match = DANGEROUS_CHARS_REGEX.exec(trimmed)) !== null) {
+    allMatches.push(match[0]);
+  }
+  if (allMatches.length > 0) {
     const uniqueChars = [...new Set(allMatches)];
     warnings.push(`Removed dangerous characters: ${uniqueChars.join(', ')}`);
     logger.info(
