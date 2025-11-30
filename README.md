@@ -131,7 +131,7 @@ curl -H "x-api-key: YOUR_KEY" "http://localhost:3000/get-group-id?groupName=My%2
 
 ## License
 
-Apache-2.0 License - see [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
