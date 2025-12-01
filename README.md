@@ -29,7 +29,32 @@ Generate API key:
 node -e "console.log('samunu_' + require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-## Commands
+## API
+
+All requests require `x-api-key` header.
+
+### Send Message
+```bash
+# Text
+curl -X POST http://localhost:3000/send-message \
+  -H "x-api-key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"id": ["6281234567890@c.us"], "message": "Hello!"}'
+
+# With file
+curl -X POST http://localhost:3000/send-message \
+  -H "x-api-key: YOUR_KEY" \
+  -F "id[]=6281234567890@c.us" \
+  -F "message=Check this" \
+  -F "files=@photo.jpg"
+```
+
+### Get Group ID
+```bash
+curl -H "x-api-key: YOUR_KEY" "http://localhost:3000/get-group-id?groupName=My%20Group"
+```
+
+## Commands (Optional)
 
 Configure commands in `command-list.json` (root folder). Changes auto-reload without restart.
 
@@ -83,44 +108,19 @@ Usage: `!weather:Jakarta`
 
 ### Configuration Options
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `type` | ✅ | `simple`, `script`, or `command_list` |
-| `enabled` | ✅ | Enable/disable command |
-| `pattern` | ✅ | Trigger pattern (add `:` suffix for parameters) |
-| `description` | | Help text description |
-| `reply` | ✅* | Response for simple commands (*required for simple type) |
-| `script` | ✅* | Executable command (*required for script type) |
-| `cwd` | | Working directory for script (default: current) |
-| `access` | | `personal`, `group`, or `both` (default: `both`) |
-| `allowedGroups` | | Restrict to specific group IDs |
-| `caseSensitive` | | Case sensitivity (default: `true`) |
-| `param_placeholder` | | Parameter description for help text |
-
-## API
-
-All requests require `x-api-key` header.
-
-### Send Message
-```bash
-# Text
-curl -X POST http://localhost:3000/send-message \
-  -H "x-api-key: YOUR_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"id": ["6281234567890@c.us"], "message": "Hello!"}'
-
-# With file
-curl -X POST http://localhost:3000/send-message \
-  -H "x-api-key: YOUR_KEY" \
-  -F "id[]=6281234567890@c.us" \
-  -F "message=Check this" \
-  -F "files=@photo.jpg"
-```
-
-### Get Group ID
-```bash
-curl -H "x-api-key: YOUR_KEY" "http://localhost:3000/get-group-id?groupName=My%20Group"
-```
+| Field | Required | Description | Example |
+|-------|----------|-------------|---------|
+| `type` | ✅ | `simple`, `script`, or `command_list` | `"simple"` |
+| `enabled` | ✅ | Enable/disable command | `true` |
+| `pattern` | ✅ | Trigger pattern (add `:` suffix for parameters) | `"!ping"` or `"!weather:"` |
+| `description` | | Help text description | `"Check bot status"` |
+| `reply` | ✅* | Response for simple commands (*required for simple type) | `"🏓 Pong!"` |
+| `script` | ✅* | Executable command (*required for script type) | `"python weather.py"` |
+| `cwd` | | Working directory for script (default: current) | `"./scripts"` |
+| `access` | | `personal`, `group`, or `both` (default: `both`) | `"group"` |
+| `allowedGroups` | | Restrict to specific group IDs | `["123456789@g.us"]` |
+| `caseSensitive` | | Case sensitivity (default: `true`) | `false` |
+| `param_placeholder` | | Parameter description for help text | `"<city>"` |
 
 ## Security
 
