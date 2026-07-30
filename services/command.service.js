@@ -38,16 +38,16 @@ function getUserId(message) {
 
 async function isCommandAllowed(message, command) {
   try {
-    const chat = await message.getChat();
-    const chatId = chat.id?._serialized;
-    const chatName = chat.name || 'Unknown';
+    const chatId = message.from || null;
+    const isGroupChat =
+      message.isGroupMsg ?? String(chatId || '').endsWith('@g.us');
     const commandIdentifier = command.script || command.pattern;
 
     const accessControl = command.access || ACCESS_TYPES.BOTH;
 
     switch (accessControl) {
       case ACCESS_TYPES.PERSONAL:
-        if (chat.isGroup) {
+        if (isGroupChat) {
           logger.info(
             `${commandIdentifier} attempted from group - personal only`,
           );
@@ -56,7 +56,7 @@ async function isCommandAllowed(message, command) {
         break;
 
       case ACCESS_TYPES.GROUP:
-        if (!chat.isGroup) {
+        if (!isGroupChat) {
           logger.info(
             `${commandIdentifier} attempted from personal - group only`,
           );
@@ -73,13 +73,13 @@ async function isCommandAllowed(message, command) {
     }
 
     if (
-      chat.isGroup &&
+      isGroupChat &&
       command.allowedGroups &&
       command.allowedGroups.length > 0
     ) {
       if (!chatId || !command.allowedGroups.includes(chatId)) {
         logger.info(
-          `${commandIdentifier} attempted from unauthorized group: ${chatName}`,
+          `${commandIdentifier} attempted from unauthorized group: ${chatId}`,
         );
         return { allowed: false, reason: 'unauthorized_group' };
       }
