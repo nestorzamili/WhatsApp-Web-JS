@@ -8,10 +8,10 @@
     "start": "node app.js"
   },
   "dependencies": {
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "multer": "^2.0.2",
+    "multer": "^2.2.0",
     "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "^1.34.6"
+    "whatsapp-web.js": "^1.34.7"
   }
 }
