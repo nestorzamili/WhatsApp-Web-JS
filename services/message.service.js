@@ -10,18 +10,18 @@ async function sendMessage(client, id, options = {}) {
   const { message, files, filePaths } = options;
 
   try {
-    const chat = await client.getChatById(id);
-    const chatName = chat.name || chat.id._serialized;
-
     if (filePaths?.length > 0) {
+      const chatName = await getChatDisplayName(client, id);
       return await sendFilesByPath(client, id, filePaths, message, chatName);
     }
 
     if (files?.length > 0) {
+      const chatName = await getChatDisplayName(client, id);
       return await sendFilesByUpload(client, id, files, message, chatName);
     }
 
     if (message) {
+      const chatName = await getChatDisplayName(client, id);
       const sentMessage = await client.sendMessage(id, message);
       logger.info(`Text message sent to ${chatName}`);
       return sentMessage;
@@ -31,6 +31,15 @@ async function sendMessage(client, id, options = {}) {
   } catch (error) {
     logger.error(`Error sending message to ${id}: ${error.message}`);
     throw error;
+  }
+}
+
+async function getChatDisplayName(client, id) {
+  try {
+    const chat = await client.getChatById(id);
+    return chat?.name || id;
+  } catch {
+    return id;
   }
 }
 
